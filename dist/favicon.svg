@@ -1,12 +1,15 @@
 <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g clip-path="url(#clip0_7_2)">
-<rect x="9" width="39" height="39" rx="6" fill="#8AC926"/>
-<rect y="11" width="37" height="37" rx="6" fill="#FF595E"/>
-<rect x="17" y="14" width="17" height="17" rx="4" fill="#FFCA3A"/>
-</g>
-<defs>
-<clipPath id="clip0_7_2">
-<rect width="48" height="48" fill="white"/>
-</clipPath>
-</defs>
+  <circle cx="24" cy="24" r="20" fill="#2D3142"/>
+  <rect x="12" y="16" width="24" height="20" rx="8" fill="white"/>
+  <ellipse cx="19" cy="26" rx="2" ry="3" fill="#2D3142"/>
+  <ellipse cx="29" cy="26" rx="2" ry="3" fill="#2D3142"/>
+  <rect x="23" y="10" width="2" height="6" rx="1" fill="white"/>
+  <circle cx="24" cy="10" r="2" fill="white"/>
+  <rect x="21" y="15" width="6" height="2" rx="1" fill="white"/>
+  <!-- 左耳朵連接線 -->
+  <rect x="10" y="25" width="5" height="2" fill="white"/>
+  <rect x="7" y="22" width="3" height="8" rx="1" fill="white"/>
+  <!-- 右耳朵連接線 -->
+  <rect x="34" y="25" width="5" height="2" fill="white"/>
+  <rect x="38" y="22" width="3" height="8" rx="1" fill="white"/>
 </svg>
