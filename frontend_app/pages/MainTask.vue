@@ -34,12 +34,14 @@
       :show-close="false"
       width="480px"
     >
-      <div style="font-size: 17px; line-height: 1.7; color: #23415a;">
-        Based on the HR team's request, the AI agent has selected two printers for you to consider.<br><br>
-        Please review the options and choose the one you think is most suitable for the office.
+      <template #header>
+        <h2>Instructions</h2>
+      </template>
+      <div class="role-content">
+        <p v-html="mainTaskInstruction"></p>
       </div>
       <template #footer>
-        <el-button type="primary" @click="showInstructionDialog = false">I Understand</el-button>
+        <el-button type="success" @click="showInstructionDialog = false">I Understand</el-button>
       </template>
     </el-dialog>
     <el-main style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
@@ -54,25 +56,50 @@
             <img :src="printer.image" :alt="printer.name" class="printer-img" />
             <div class="printer-info">
               <h3>{{ printer.name }}</h3>
-              <div class="printer-brand">{{ printer.brand }}</div>
-              <ul class="printer-specs">
-                <li v-for="spec in printer.specs" :key="spec">{{ spec }}</li>
-              </ul>
-              <div class="printer-price">${{ printer.price }}</div>
-              <el-button
-                type="info"
-                plain
-                @click="showPrinterDetail(printer)"
-              >
-                More Info
-              </el-button>
-              <el-button
-                type="primary"
-                :plain="selectedPrinter !== printer.id"
-                @click="selectPrinter(printer.id)"
-              >
-                {{ selectedPrinter === printer.id ? 'Selected' : 'Choose' }}
-              </el-button>
+              <div class="printer-price"><span class="dollar-sign">$</span>{{ printer.price }}</div>
+
+              <div class="printer-section">
+                <div class="section-title">Key Specs</div>
+                <ul class="printer-specs">
+                  <li v-for="spec in printer.specs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Full Specifications</div>
+                <ul class="printer-fullspecs">
+                  <li v-for="spec in printer.fullSpecs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Features</div>
+                <ul class="printer-features">
+                  <li v-for="feature in printer.features" :key="feature">{{ feature }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Customer Reviews</div>
+                <div class="printer-reviews">
+                  <div v-for="review in printer.reviews" :key="review.text" class="printer-review">
+                    <span style="color: #FFD700;">★</span> <b>{{ review.stars }}/5</b> — <i>{{ review.user }}</i><br>
+                    <span>{{ review.text }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="printer-bottom">
+                <div class="printer-actions">
+                  <el-button
+                    type="primary"
+                    :plain="selectedPrinter !== printer.id"
+                    @click="selectPrinter(printer.id)"
+                  >
+                    {{ selectedPrinter === printer.id ? 'Selected' : 'Select' }}
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -126,6 +153,8 @@
 </template>
 
 <script>
+import canonImg from '../static/canon.jpg'
+import hpImg from '../static/hp.jpg'
 export default {
   name: 'MainTask',
   data() {
@@ -151,12 +180,14 @@ export default {
       showDetailDialog: false,
       detailPrinter: null,
       showInstructionDialog: false,
+      mainTaskInstruction: `Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>
+<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`,
       printers: [
         {
           id: 'canon',
           name: 'Canon PIXMA TR7820',
           brand: 'Canon',
-          image: '/canon.jpg',
+          image: canonImg,
           price: 129.00,
           specs: [
             'All-in-One: Print, Copy, Scan',
@@ -195,7 +226,7 @@ export default {
           id: 'hp',
           name: 'HP OfficeJet Pro 8025e',
           brand: 'HP',
-          image: '/hp.jpg',
+          image: hpImg,
           price: 69.99,
           specs: [
             'All-in-One: Print, Copy, Scan, Fax',
@@ -264,6 +295,7 @@ export default {
   gap: 32px;
   justify-content: center;
   flex-wrap: wrap;
+  align-items: stretch;
 }
 .printer-card {
   background: #fff;
@@ -271,6 +303,7 @@ export default {
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
   padding: 24px 20px 20px 20px;
   width: 340px;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -282,14 +315,33 @@ export default {
   box-shadow: 0 4px 20px 0 rgba(75,155,135,0.12);
 }
 .printer-img {
-  width: 180px;
-  height: 120px;
+  width: 200px;
+  height: 140px;
   object-fit: contain;
   margin-bottom: 18px;
-  background: #f8f8f8;
   border-radius: 8px;
 }
 .printer-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+.printer-bottom {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.printer-price {
+  font-size: 22px;
+  color: #222;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+.printer-actions .el-button {
   width: 100%;
 }
 .printer-brand {
@@ -298,27 +350,35 @@ export default {
   font-weight: bold;
   margin-bottom: 6px;
 }
-.printer-specs {
-  font-size: 14px;
-  color: #555;
-  margin: 10px 0 10px 0;
-  padding-left: 18px;
+.printer-section {
+  margin-bottom: 22px;
 }
-.printer-price {
-  font-size: 20px;
-  color: #222;
+.section-title {
+  font-size: 17px;
   font-weight: bold;
+  color: #4B9B87;
   margin-bottom: 8px;
+  letter-spacing: 0.5px;
 }
-.printer-info .el-button {
-  height: 44px;
-  font-weight: normal;
-  font-size: 16px;
-  width: 100%;
-  margin: 0 0 8px 0;
+.printer-specs,
+.printer-fullspecs,
+.printer-features {
+  font-size: 15px;
+  color: #444;
+  margin: 0 0 0 18px;
+  padding: 0;
+  list-style: disc inside;
 }
-.printer-info .el-button:last-child {
-  margin-bottom: 0;
+.printer-reviews {
+  margin-top: 8px;
+}
+.printer-review {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #333;
 }
 .el-radio.is-bordered {
   border: none !important;
@@ -358,5 +418,17 @@ export default {
   grid-template-columns: repeat(7, 1fr);
   gap: 0;
   justify-items: center;
+}
+.role-content {
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 20px 0;
+  color: #222;
+}
+.dollar-sign {
+  font-size: 16px;
+  color: #888;
+  vertical-align: super;
+  margin-right: 2px;
 }
 </style>

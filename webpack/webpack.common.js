@@ -1,4 +1,3 @@
-
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
@@ -29,7 +28,7 @@ module.exports = {
     //Plugins to help and include additionals functionalities to webpack
     plugins: [
         new HtmlWebpackPlugin({
-            title: 'Co-here',
+            title: 'NaviBot',
             favicon: path.resolve(__src, 'static', 'favicon.svg'),
             template: path.resolve(__src, 'templates', 'index.html'),
         }),
@@ -64,7 +63,7 @@ module.exports = {
             },
             //Indicates that png files are assets to be processed by webpack
             {
-                test: /\.png$/,
+                test: /\.(png|jpe?g|gif|svg)$/i,
                 type: 'asset/resource'
             },
         ]

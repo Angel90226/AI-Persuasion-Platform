@@ -39,25 +39,50 @@
             <img :src="printers[0].image" :alt="printers[0].name" class="printer-img" />
             <div class="printer-info">
               <h3>{{ printers[0].name }}</h3>
-              <div class="printer-brand">{{ printers[0].brand }}</div>
-              <ul class="printer-specs">
-                <li v-for="spec in printers[0].specs" :key="spec">{{ spec }}</li>
-              </ul>
-              <div class="printer-price">${{ printers[0].price }}</div>
-              <el-button
-                type="info"
-                plain
-                @click="showPrinterDetail(printers[0])"
-              >
-                More Info
-              </el-button>
-              <el-button
-                type="primary"
-                :plain="selectedPrinter !== printers[0].id"
-                @click="selectPrinter(printers[0].id)"
-              >
-                {{ selectedPrinter === printers[0].id ? 'Selected' : 'Choose' }}
-              </el-button>
+              <div class="printer-price"><span class="dollar-sign">$</span>{{ printers[0].price }}</div>
+
+              <div class="printer-section">
+                <div class="section-title">Key Specs</div>
+                <ul class="printer-specs">
+                  <li v-for="spec in printers[0].specs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Full Specifications</div>
+                <ul class="printer-fullspecs">
+                  <li v-for="spec in printers[0].fullSpecs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Features</div>
+                <ul class="printer-features">
+                  <li v-for="feature in printers[0].features" :key="feature">{{ feature }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Customer Reviews</div>
+                <div class="printer-reviews">
+                  <div v-for="review in printers[0].reviews" :key="review.text" class="printer-review">
+                    <span style="color: #FFD700;">★</span> <b>{{ review.stars }}/5</b> — <i>{{ review.user }}</i><br>
+                    <span>{{ review.text }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="printer-bottom">
+                <div class="printer-actions">
+                  <el-button
+                    type="primary"
+                    :plain="selectedPrinter !== printers[0].id"
+                    @click="selectPrinter(printers[0].id)"
+                  >
+                    {{ selectedPrinter === printers[0].id ? 'Selected' : 'Purchase' }}
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -69,25 +94,50 @@
             <img :src="printers[1].image" :alt="printers[1].name" class="printer-img" />
             <div class="printer-info">
               <h3>{{ printers[1].name }}</h3>
-              <div class="printer-brand">{{ printers[1].brand }}</div>
-              <ul class="printer-specs">
-                <li v-for="spec in printers[1].specs" :key="spec">{{ spec }}</li>
-              </ul>
-              <div class="printer-price">${{ printers[1].price }}</div>
-              <el-button
-                type="info"
-                plain
-                @click="showPrinterDetail(printers[1])"
-              >
-                More Info
-              </el-button>
-              <el-button
-                type="primary"
-                :plain="selectedPrinter !== printers[1].id"
-                @click="selectPrinter(printers[1].id)"
-              >
-                {{ selectedPrinter === printers[1].id ? 'Selected' : 'Choose' }}
-              </el-button>
+              <div class="printer-price"><span class="dollar-sign">$</span>{{ printers[1].price }}</div>
+
+              <div class="printer-section">
+                <div class="section-title">Key Specs</div>
+                <ul class="printer-specs">
+                  <li v-for="spec in printers[1].specs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Full Specifications</div>
+                <ul class="printer-fullspecs">
+                  <li v-for="spec in printers[1].fullSpecs" :key="spec">{{ spec }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Features</div>
+                <ul class="printer-features">
+                  <li v-for="feature in printers[1].features" :key="feature">{{ feature }}</li>
+                </ul>
+              </div>
+
+              <div class="printer-section">
+                <div class="section-title">Customer Reviews</div>
+                <div class="printer-reviews">
+                  <div v-for="review in printers[1].reviews" :key="review.text" class="printer-review">
+                    <span style="color: #FFD700;">★</span> <b>{{ review.stars }}/5</b> — <i>{{ review.user }}</i><br>
+                    <span>{{ review.text }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="printer-bottom">
+                <div class="printer-actions">
+                  <el-button
+                    type="primary"
+                    :plain="selectedPrinter !== printers[1].id"
+                    @click="selectPrinter(printers[1].id)"
+                  >
+                    {{ selectedPrinter === printers[1].id ? 'Selected' : 'Purchase' }}
+                  </el-button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -146,6 +196,8 @@
 
 <script>
 import { ElMessage } from 'element-plus'
+import canonImg from '../static/canon.jpg'
+import hpImg from '../static/hp.jpg'
 export default {
   name: 'PersuasionTask',
   data() {
@@ -162,7 +214,7 @@ export default {
           id: 'canon',
           name: 'Canon PIXMA TR7820',
           brand: 'Canon',
-          image: '/canon.jpg',
+          image: canonImg,
           price: 129.00,
           specs: [
             'All-in-One: Print, Copy, Scan',
@@ -201,7 +253,7 @@ export default {
           id: 'hp',
           name: 'HP OfficeJet Pro 8025e',
           brand: 'HP',
-          image: '/hp.jpg',
+          image: hpImg,
           price: 69.99,
           specs: [
             'All-in-One: Print, Copy, Scan, Fax',
@@ -262,6 +314,7 @@ export default {
     }
   },
   created() {
+    window.scrollTo(0, 0);
     this.firstSelection = this.$route.query.first;
     this.messageSegments = this.persuasionSegments;
     // 顯示 loading 動畫後再逐段顯示訊息
@@ -404,27 +457,14 @@ export default {
   box-shadow: 0 4px 20px 0 rgba(75,155,135,0.12);
 }
 .printer-img {
-  width: 180px;
-  height: 120px;
+  width: 200px;
+  height: 140px;
   object-fit: contain;
   margin-bottom: 18px;
-  background: #f8f8f8;
   border-radius: 8px;
 }
 .printer-info {
   width: 100%;
-}
-.printer-brand {
-  font-size: 14px;
-  color: #4B9B87;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-.printer-specs {
-  font-size: 14px;
-  color: #555;
-  margin: 10px 0 10px 0;
-  padding-left: 18px;
 }
 .printer-price {
   font-size: 20px;
@@ -482,5 +522,77 @@ export default {
 @keyframes blink {
   0%, 80%, 100% { opacity: 0.2; }
   40% { opacity: 1; }
+}
+.printer-fullspecs {
+  font-size: 14px;
+  color: #555;
+  margin: 10px 0 10px 0;
+  padding-left: 18px;
+}
+.printer-features {
+  font-size: 14px;
+  color: #555;
+  margin: 10px 0 10px 0;
+  padding-left: 18px;
+}
+.printer-reviews {
+  font-size: 14px;
+  color: #555;
+  margin: 10px 0 10px 0;
+  padding-left: 18px;
+}
+.printer-review {
+  margin-bottom: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+.printer-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 10px;
+  gap: 8px;
+}
+.printer-actions {
+  width: 100%;
+  display: flex;
+  gap: 0;
+}
+.printer-section {
+  margin-bottom: 22px;
+}
+.section-title {
+  font-size: 17px;
+  font-weight: bold;
+  color: #4B9B87;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.printer-specs,
+.printer-fullspecs,
+.printer-features {
+  font-size: 15px;
+  color: #444;
+  margin: 0 0 0 18px;
+  padding: 0;
+  list-style: disc inside;
+}
+.printer-reviews {
+  margin-top: 8px;
+}
+.printer-review {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: #333;
+}
+.dollar-sign {
+  font-size: 16px;
+  color: #888;
+  vertical-align: super;
+  margin-right: 2px;
 }
 </style> 
