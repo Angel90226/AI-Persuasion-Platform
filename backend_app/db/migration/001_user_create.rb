@@ -10,6 +10,7 @@ Sequel.migration do
       String :power_condition
       String :presence_condition
       DateTime :created_at
+      DateTime :updated_at
     end
   end
 end
