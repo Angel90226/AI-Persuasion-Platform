@@ -1,8 +1,6 @@
 <script>
 // Constants.vue
 export default {
-//   CREATIVE:"<p> <b><u class='v'>Background Scenario:</u></b> <br/> You are a prominent online influencer specializing in remote work and travel. You like to work remotely in different countries and experience different cultures.  In addition, you also enjoy the innovative experience that cutting-edge technology brings you in your travels. <br/><br/> <b><u> Task Description:</u></b> <br/> You are now collaborating with a world-renowned design team. The team's goal is to design the experience for travelers, for a futuristic, innovative, high-tech airport in Tokyo due to be built in the year 2050. The team decided to draw upon your extensive travel experience and inclination for cutting-edge technology. They seek your help their team propose an interesting experience for travelers using this airport. Your task is divided into two parts.<br/><br/> <b>Part 1:</b> <br/>Please write a story of an ideal experience a traveler might have in using this futuristic airport. The story should focus on what a traveler might see and experience in the airport, and how it will make them feel. This futuristic experience can be creative and does not need to be limited to today’s technologies; instead, focus on achieving your ideal experience. <b>The story should be 100-200 words.</b> <br/><br/> <b>Part 2:</b><br/>Create three catchy marketing slogans that encapsulate the unique futuristic experiences mentioned in your story. <b>Each of the three slogans should be within 2 - 10 words.</b></p>",
-//   PRACTICAL:"<p><b><u class='v'>Background Scenario:</u></b> <br/> You are a prominent online influencer specializing in remote work and travel. You like to work remotely in different countries and experience different cultures.  In addition, you also enjoy the innovative experience that cutting-edge technology brings you in your travels.<br/><br/> <b><u> Task Description:</u></b></br>You are preparing a post for your Facebook fan page that will guide first-time travelers successfully through the complicated process at a major airport in Japan to travel. The Facebook post will be divided into two parts.</br> </br> <b>Part 1:</b> <br/>Create a concise, step-by-step guide that a traveler needs to follow from the moment they arrive at the airport until they board their plane.A  traveler should be able to navigate the airport experience following only your guide. <b> The guide should be 100-200 words.</b> </br><b>Part 2:</b><br/>Highlight the the top three bits of advice you would give travelers to prevent the most common mistakes they might make.<b> Each of the three bits of advice should be no more than 1 sentence (three sentences total).</b></p>",
   MAX_TEMP: 1.2,
   MIN_TEMP: 0.4,
   DEFAULTS_TEMP: 0.6,
@@ -13,6 +11,32 @@ export default {
   MISSION_EXPIRE_TIME: 3600,
 //   ACCEPTABLE_MIN_WORDS: 100,
 //   ACCEPTABLE_MAX_WORDS: 250,
+
+  // NaviBot Constants
+  NAVIBOT_ROLE_DESCRIPTION: `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> at your company.<br>
+In this role, you oversee purchasing decisions and manage important vendor communications on behalf of the procurement department.
+The company recently introduced a new internal AI assistant called NaviBot, designed to help you work more efficiently.<br><br>
+<strong>Please give the agent instructions and feedback to ensure the message reflects your intent before it is finalized.</strong>`,
+
+  NAVIBOT_EMAIL_REQUIREMENT: `The HR department has requested a new printer for their office with the following requirements:<br><br>
+<ul>
+  <li>The printer should have a print speed of at least 20 pages per minute to efficiently handle daily HR paperwork and urgent tasks.</li>
+  <li>The input tray should hold at least 200 sheets of paper to minimize the need for frequent refilling and support continuous office operations.</li>
+  <li>Automatic duplex (double-sided) printing is required to save paper and streamline document handling.</li>
+</ul>
+Please help us purchase a printer that meets these requirements by next week. Thank you for your assistance!<br><br>
+Best regards,<br>
+HR Team`,
+
+  NAVIBOT_INTRO: `Good morning!<br>This morning, HR sent you an email regarding their printer purchase request (see the message on the right). Below is a summary of the key requirements.<br><br><span style="color:#d72660;">📌</span> Summary of HR's requirements:<ul style="margin-top: 4px; margin-bottom: 12px;"><li>Print speed of at least 20 ppm for efficient document handling.</li><li>Paper tray capacity of at least 200 sheets to reduce refills.</li><li>Automatic duplex printing to save paper and improve workflow.</li></ul>Type \"DRAFT\" when you are ready to see the draft reply email.`,
+
+  NAVIBOT_DRAFT_EMAIL: `I've prepared an initial draft of the reply email for your review.<br><br><div style='background: #fff; color: #222; border-radius: 10px; padding: 16px; margin: 8px 0;'><b>Subject:</b> Re: Request for New Printer Purchase<br><br>Dear HR Team,<br><br>Thank you for letting us know about your printer needs. We will do our best to help you purchase a new printer that meets your requirements by next week.<br><br>Best regards,<br>Procurement Team</div>`,
+
+  NAVIBOT_DRAFT_FEEDBACK: `If you'd like me to make any changes, clarifications, or improvements, please let me know—your suggestions are always welcome, and I'll adjust the draft as needed.<br>Type \"SEND\" when you are ready to send the email out.`,
+
+  NAVIBOT_SYSTEM_CONTENT: `You are NaviBot, an AI assistant designed to help the Senior Procurement Manager with their tasks. 
+You should be professional, helpful, and focused on procurement-related matters. 
+Your responses should be concise and to the point.`
 }
 </script>
 

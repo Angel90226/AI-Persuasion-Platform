@@ -42,7 +42,6 @@ module AIPersuasion
     # rubocop:disable Metrics/MethodLength
     def self.build_request_body(system_content, history_messages, temperature)
       # history_messages.
-      # 'gpt-3.5-turbo'
       puts 'test:', JSON.dump(
         {
           'model' => 'gpt-4o',
@@ -68,19 +67,6 @@ module AIPersuasion
 
         }
       )
-      # JSON.dump(
-      #   {
-      #     'model' => 'gpt-3.5-turbo',
-      #     'temperature' => 0.3,
-      #     'messages' => [
-      #       {
-      #         'role' => 'system',
-      #         'content' => system_content
-      #       },
-      #       history_messages
-      #     ]
-      #   }
-      # )
     end
     # rubocop:enable Metrics/MethodLength
 

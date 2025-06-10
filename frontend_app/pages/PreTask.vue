@@ -18,7 +18,7 @@
             <p v-html="roleDescription"></p>
           </div>
           <template #footer>
-            <el-button type="success" @click="closeRoleDialog">I Understand</el-button>
+            <el-button type="success" @click="initialGreeting">I Understand</el-button>
           </template>
         </el-dialog>
 
@@ -33,13 +33,13 @@
         <el-main>
           <el-row :gutter="20">
             <!-- left: chatbot -->
-            <el-col :span="12" style="height: 100%; border-right: 1px solid #eee; display: flex; align-items: center; justify-content: center;">
+            <el-col :span="12" class="chatbot-area">
               <div class="chat-app-window">
                 <div class="chat-header">
                   <span class="chat-title"><i class="el-icon-message"></i> NaviBot</span>
                 </div>
-                <div class="chat-messages" ref="chatMessages">
-                  <div v-for="(msg, idx) in chatMessages" :key="idx" :class="['chat-bubble', msg.type]">
+                <div class="chat-messages" ref="messageContainer">
+                  <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.type]">
                     <div v-if="msg.type === 'bot'" class="avatar bot-avatar">
                       <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
                     </div>
@@ -47,9 +47,8 @@
                       <div
                         v-if="!msg.isDraft"
                         :class="['bubble-text', msg.type === 'bot' ? 'bot-text' : 'user-text']"
-                      >
-                        {{ msg.text }}
-                      </div>
+                        v-html="msg.text"
+                      ></div>
                       <div
                         v-else
                         :class="['bubble-text', msg.type === 'bot' ? 'bot-text' : 'user-text', 'draft-reply']"
@@ -84,7 +83,7 @@
               </div>
             </el-col>
             <!-- right: email (only show after 'start') -->
-            <el-col v-if="showEmail" :span="12" style="background: #fff; border-left: 1px solid #eee; height: 100%;">
+            <el-col v-if="showEmail" :span="12" class="email-column">
               <div style="padding: 32px;">
                 <div class="email-header">
                   <h2>Request for New Printer Purchase</h2>
@@ -104,90 +103,290 @@
 </template>
 
 <script>
+import { ref, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+import Constants from '../constant/Constants.vue'
+import axios from 'axios'
+import {marked} from "marked";
+
 export default {
-  data() {
-    return {
-      showRoleDialog: true,
-      currentStep: 1,
-      userInput: '',
-      chatMessages: [],
-      showTyping: false,
-      showEmail: false,
-      roleDescription: `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> at your company.<br>
-In this role, you oversee purchasing decisions and manage important vendor communications on behalf of the procurement department.
-The company recently introduced a new internal AI assistant called NaviBot, designed to help you work more efficiently.<br><br>
-<strong>Please give the agent instructions and feedback to ensure the message reflects your intent before it is finalized.</strong>`,
-      emailLongRequirement: `
-The HR department has requested a new printer for their office with the following requirements:<br><br>
-<ul>
-  <li>The printer should have a print speed of at least 20 pages per minute to efficiently handle daily HR paperwork and urgent tasks.</li>
-  <li>The input tray should hold at least 200 sheets of paper to minimize the need for frequent refilling and support continuous office operations.</li>
-  <li>Automatic duplex (double-sided) printing is required to save paper and streamline document handling.</li>
-</ul>
-Please help us purchase a printer that meets these requirements by next week. Thank you for your assistance!<br><br>
-Best regards,<br>
-HR Team
-`,
-      navibotIntro: `Good morning!<br>This morning, HR sent you an email regarding their printer purchase request (see the message on the right). Below is a summary of the key requirements.<br><br><span style="color:#d72660;">📌</span> Summary of HR's requirements:<ul style="margin-top: 4px; margin-bottom: 12px;"><li>Print speed of at least 20 ppm for efficient document handling.</li><li>Paper tray capacity of at least 200 sheets to reduce refills.</li><li>Automatic duplex printing to save paper and improve workflow.</li></ul>Type \"DRAFT\" when you are ready to see the draft reply email.`,
-      draftEmail: `I've prepared an initial draft of the reply email for your review.<br><br><div style='background: #fff; color: #222; border-radius: 10px; padding: 16px; margin: 8px 0;'><b>Subject:</b> Re: Request for New Printer Purchase<br><br>Dear HR Team,<br><br>Thank you for letting us know about your printer needs. We will do our best to help you purchase a new printer that meets your requirements by next week.<br><br>Best regards,<br>Procurement Team</div>`,
-      draftFeedback: `If you'd like me to make any changes, clarifications, or improvements, please let me know—your suggestions are always welcome, and I'll adjust the draft as needed.<br>Type \"SEND\" when you are ready to send the email out.`
-    }
-  },
-  methods: {
-    async botSendMessage(text, options = {}) {
-      this.showTyping = true;
-      const delay = options.delay || 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-      this.showTyping = false;
-      this.chatMessages.push({
-        type: 'bot',
-        ...options,
-        text,
-        timestamp: new Date()
-      });
-      this.scrollToBottom();
-    },
-    scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$refs.chatMessages;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      });
-    },
-    async closeRoleDialog() {
-      this.showRoleDialog = false;
-      this.currentStep = 2;
-      await this.botSendMessage(`Hello! I'm NaviBot, an AI agent here to help you with your task. Please type 'START' to get the task started.`);
-    },
-    async handleSend() {
-      if (!this.userInput.trim()) return;
-      this.chatMessages.push({ type: 'user', text: this.userInput, timestamp: new Date() });
-      this.scrollToBottom();
+  setup() {
+    const router = useRouter()
+    const showRoleDialog = ref(true)
+    const currentStep = ref(1)
+    const userInput = ref('')
+    const messages = ref([])
+    const showTyping = ref(false)
+    const showEmail = ref(false)
+    const roleDescription = ref(Constants.NAVIBOT_ROLE_DESCRIPTION)
+    const emailLongRequirement = ref(Constants.NAVIBOT_EMAIL_REQUIREMENT)
+    const navibotIntro = ref(Constants.NAVIBOT_INTRO)
+    const draftEmail = ref(Constants.NAVIBOT_DRAFT_EMAIL)
+    const draftFeedback = ref(Constants.NAVIBOT_DRAFT_FEEDBACK)
+    const currentTemp = ref(Constants.DEFAULTS_TEMP)
+    const messageSending = ref(false);
+    const user_id = ref('anonymous');
+    let promptStartTime=0
+    let promptEndTime=0
 
-      const input = this.userInput.trim().toUpperCase();
-
-      if (input === 'START') {
-        this.currentStep = 3;
-        await this.botSendMessage(this.navibotIntro, { isDraft: true });
-        this.showEmail = true;
-      } else if (input === 'DRAFT') {
-        this.currentStep = 4;
-        await this.botSendMessage(this.draftEmail, { isDraft: true });
-        await this.botSendMessage(this.draftFeedback, { isDraft: true });
-      } else if (input === 'SEND') {
-        await this.botSendMessage(`No problem, moving to the main task...`);
-        setTimeout(() => {
-          this.$router.push('/main-task');
-        }, 1200);
+    // API related
+    const loadPreviousMessages = async ()=>{
+      try {
+        let api_url = "/messages";
+        if(user_id.value !== 'anonymous'){
+          api_url = `/messages?user_id=${user_id.value}`;
+        } 
+        const { data } = await axios.get(api_url);
+        messages.value = data.map( (chat)=>{
+          return {
+            id: chat.created_at,
+            text: marked(chat.response),
+            type: chat.role,
+            timestamp: chat.created_at ? new Date(chat.created_at) : new Date(),
+          }
+        
+        }); // Assuming the data is an array of messages
+        nextTick(() => {
+          scrollToBottom();
+        });
+      } catch (error) {
+        console.error("Failed to fetch initial messages:", error);
+        sendError({error_message:"Failed to fetch initial messages:"+ error});
       }
+    
+    }
 
-      this.userInput = '';
-    },
-    formatTimestamp(ts) {
-      if (!ts) return '';
-      const date = typeof ts === 'string' ? new Date(ts) : ts;
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // Call loadPreviousMessages when component is mounted
+    onMounted(() => {
+      loadPreviousMessages()
+    })
+
+
+    const scrollToBottom = () => {
+      nextTick(() => {
+        const container = document.querySelector('.chat-messages')
+        if (container) {
+          container.scrollTop = container.scrollHeight
+        }
+      })
+    }
+
+    const initialGreeting = async () => {
+      showRoleDialog.value = false
+      await botSendMessage(`Hello! I'm NaviBot, an AI agent here to help you with your task. Please type 'START' to get the task started.`)
+    }
+
+    //Create a message
+    function createMessage(message,identity) {
+      messages.value.push({
+        id: Date.now(),
+        text: message,
+        type: identity || "user",
+        temp: currentTemp.value,
+        timestamp: new Date(),
+      });
+      scrollToBottom();
+    }
+
+    // Real-time chat effect
+    const botSendMessage = async (text, options = {}) => {
+      showTyping.value = true
+      const delay = options.delay || 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+      showTyping.value = false
+      createMessage('', 'bot');
+    }
+
+    const storeMessage = async (type, text) => {
+      try {
+        const postData = {
+          role: type,
+          response: text,
+          prompt_time: new Date().toISOString()
+      };
+      console.log('Post Data:', postData);
+        let api_url = "/message";
+        if(user_id.value !== 'anonymous'){
+          api_url = `/message?user_id=${user_id.value}`;
+        } 
+      const { data } = await axios.post(api_url, postData);
+      console.log('Store Message:', data);
+
+      } catch (error) {
+        console.error('Failed to store message:', error)
+        sendError({error_message:"Failed to store message:"+ error});
+      }
+    }
+
+    let controller = null;
+    const streamingResponse = async () => {
+      messageSending.value = true;
+      let insufficient=false;
+      let save_message = '';
+      let streaming_message = '';
+      let api_url = "/openAI-streaming";
+      if(user_id.value !== 'anonymous'){
+        api_url = `/openAI-streaming?user_id=${user_id.value}`
+        ;
+      } 
+      controller = new AbortController();
+      const signal = controller.signal;
+      try {
+        createMessage('', 'bot');
+        if(promptEndTime===0){
+          promptEndTime=new Date().getTime();
+        }
+        
+        const response = await fetch(api_url,
+        {
+          method: "POST",
+          headers: {
+          "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message_content: userInput.value,
+            system_temp: currentTemp.value,
+            role: "user",
+            prompt_time: (promptEndTime-promptStartTime)/1000,
+          }),
+          signal,
+        });
+        promptStartTime=0;
+        promptEndTime=0;
+        userInput.value = '';
+        // disabled the sender button
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8",{ stream: true });
+
+        while(true){
+          const {done, value} = await reader.read();
+          if(done){
+            break;
+          }
+          const chunk = decoder.decode(value);
+
+          const lines = chunk.split("\n");
+          if(insufficient){
+            lines[0] = save_message + lines[0];
+            insufficient=false;
+          }
+          console.log('Streaming Lines:', lines);
+          // const parsedLines = lines.filter((line) => line.trim() !== ''  && !line.includes("[DONE]"))
+          //                         .map((line)=>line.replace(/^data: /, "").trim())
+          //                         .map((line) => JSON.parse(line));
+
+          const parsedLines = lines
+                .filter((line) => line.trim() !== "" && !line.includes("\[DONE\]"))
+                .map((line) => line.replace(/^data: /, "").trim())
+                .map((line) => {
+                  try {
+                    return JSON.parse(line);
+                  } catch (error) {
+                    console.error("Failed to parse JSON line:", line);
+                    // sendError({error_message:"Failed to parse JSON line:"+ line});
+                    insufficient=true;
+                    save_message = line;
+
+                    console.error(error);
+                    return null; // or handle the error in a different way
+                  }
+                })
+                .filter((parsedLine) => parsedLine !== null); // Filter out null values caused by parsing errors
+
+          // console.log('Streaming Response:', parsedLines);
+          for ( const parsedLine of parsedLines){
+            const {choices} = parsedLine;
+            const { delta } = choices[0];
+            const { content } = delta;
+            if(content){
+              streaming_message += content;
+              messages.value[messages.value.length - 1]["text"] = marked(streaming_message);
+            }         
+            // console.log('Store to messages:', messages.value[messages.value.length - 1]);
+            // console.log('Streaming Response:', streaming_message);
+            // createMessage(marked(parsedLine.response), "assistant");
+          }
+
+        }
+
+        // console.log('Streaming Response:', data);
+      } catch (error) {
+        if(signal.aborted){
+          console.error('Request Aborted:', error);
+        }else{
+          console.error('Failed to Streaming:', error);
+          sendError({error_message:"Failed to Streaming:"+ error});
+        }
+      }finally{
+        controller = null;
+        messageSending.value = false;
+        // send API to backend
+        await storeMessage(streaming_message,'assistant');
+      }
+    }
+
+    const handleSend = async () => {
+      if (!userInput.value.trim()) return
+      
+      // Add user message
+      createMessage(marked(userInput.value),'user');
+
+      try {
+        // Store message in backend
+        await storeMessage('user',userInput.value)
+
+        // Get streaming response
+        await streamingResponse()
+
+      } catch (error) {
+        console.error('Error in handleSend:', error)
+        createMessage('Sorry, I encountered an error. Please try again.','bot');
+      } finally {
+        showTyping.value = false
+        userInput.value = ''
+      }
+    }
+
+    const sendError = async (error) => {
+      if (error) {
+        let api_url = "/error-log";
+        if (user_id.value !== 'anonymous') {
+          api_url = `/error-log?user_id=${user_id.value}`;
+        }
+        try {
+          const { data } = await axios.post(api_url, error);
+          // console.log('Response Behavior', data);
+        } catch (err) {
+          console.error('Failed to send error:', err);
+          // Handle specific error scenarios here if needed
+        }
+      }
+    }
+
+    const formatTimestamp = (ts) => {
+      if (!ts) return ''
+      const date = typeof ts === 'string' ? new Date(ts) : ts
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    }
+
+    // Return variables and methods to be used in the template
+    return {
+      showRoleDialog,
+      // currentStep,
+      userInput,
+      messages,
+      showTyping,
+      showEmail,
+      roleDescription,
+      emailLongRequirement,
+      navibotIntro,
+      draftEmail,
+      draftFeedback,
+      botSendMessage,
+      scrollToBottom,
+      initialGreeting,
+      handleSend,
+      formatTimestamp
     }
   }
 }
@@ -289,6 +488,10 @@ HR Team
   word-break: break-word;
   box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
 }
+.bubble-text :deep(p){
+  margin: 0 !important;
+  padding: 0 !important;
+}
 .bot-text {
   background: #2A2A2A;
   color: #fff;
@@ -347,10 +550,23 @@ HR Team
 .chat-send-btn:hover {
   background: #444;
 }
+.chatbot-area {
+  height: 100%;
+  border-right: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .el-header {
   background: #232323;
   border-bottom: 1px solid #333;
   color: #fff;
+}
+.email-area {
+  padding: 32px;
+  background: #fff;
+  border-left: 1px solid #eee;
+  height: 100%;
 }
 .email-content {
   background: #fff;

@@ -17,7 +17,7 @@ module AIPersuasion
     # PRACTICAL_TASK = 'practical'
     # CREATVIE_TASK = 'creative'
     # TASK_TYPES = %w[CREATIVE PRACTICAL].freeze
-    # BASE_PROMPT = 'Act as a travel advisor and provide technical insight on travel aspect suggestions. Write in active voice to make sentences more engaging and easier to follow. The user you are responding to needs to complete a writing task about airports. As the strict advisor, you must keep your replies less than 100 words and briefer is better.'
+    BASE_PROMPT = 'Act as a travel advisor and provide technical insight on travel aspect suggestions. Write in active voice to make sentences more engaging and easier to follow. The user you are responding to needs to complete a writing task about airports. As the strict advisor, you must keep your replies less than 100 words and briefer is better.'
     # TEST_LOREM = 'lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
 
     # WELCOME_MESSAGE = 'Hello, I am your AI assistant. I have abundant traveling experiences and knowledge. How can I help you today?'
@@ -35,6 +35,96 @@ module AIPersuasion
 
       r.get [String, true], [String, true], [true] do |_parsed_request|
         File.read(File.join('dist', 'index.html'))
+      end
+
+      # streaming with openAI api in frontend assign prompt
+      r.post 'openAI-streaming' do
+        response['Content-Type'] = 'text/event-stream'
+        response['Cache-Control'] = 'no-cache'
+        response['Connection'] = 'keep-alive'
+
+        user_id = r.params['user_id'] || 'anonymous'
+        data = JSON.parse(r.body.read)
+
+        temp = data['temp'] || 0.7
+        new_chat = if Chat.first(user_id:).nil?
+                     Chat.create(user_id:)
+                   else
+                     Chat.first(user_id:)
+                   end
+
+        Message.create(chat_id: new_chat.id, role: 'user', response: data['message_content'],
+                       prompt_time: data['prompt_time'])
+        history_messages = Message.where(chat_id: new_chat.id).map(&:values).map do |item|
+          {
+            role: item[:role],
+            content: item[:response]
+          }
+        end
+        streaming_gpt = ChatGptStreaming.new(BASE_PROMPT, history_messages, temp)
+        stream do |out|
+          streaming_gpt.streaming.each { |message| out << message }
+          sleep 0.1
+        end
+      end
+
+      r.post 'message' do
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        user_id = r.params['user_id'] || 'anonymous'
+        data = JSON.parse(r.body.read)
+        print 'data to store:', data
+        role = data['role'] || 'user'
+        new_chat = if Chat.first(user_id:).nil?
+                     Chat.create(user_id:)
+                   else
+                     Chat.first(user_id:)
+                   end
+        Message.create(chat_id: new_chat.id, role:, response:)
+        Message.where(chat_id: new_chat.id).map(&:values).to_json
+      end
+    
+      # test Queue
+      r.get 'queue' do
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        # print('test:', Api.config)
+        RandomQueue.new(Api.config).queue_attributes.to_json
+      end
+
+      r.get 'reset-queue' do
+        num_of_task = r.params['num'].to_i || 400
+        queue = RandomQueue.new(Api.config)
+        queue.clear_queue
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        queue.fill_task(num_of_task).to_json
+      end
+
+      r.post 'reset-queue-imbalance' do
+        data = JSON.parse(r.body.read)
+
+        TASK_TYPES.each do |task|
+          next unless data[task].nil? || data[task].to_i < 0
+
+          response['Content-Type'] = 'application/json'
+          response.status = 500
+          { success: false, message: 'Invalid type given' }.to_json
+          break
+        end
+        queue = RandomQueue.new(Api.config)
+        queue.clear_queue
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        queue.fill_task_imbalance(data).to_json
+      end
+
+      r.get 'clear-queue' do
+        queue = RandomQueue.new(Api.config)
+        queue.clear_queue
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        { success: true, message: 'Queue cleared' }.to_json
       end
     end
   end

@@ -2,6 +2,7 @@
 
 require 'sequel'
 module AIPersuasion
+  # class to store the users
   class User < Sequel::Model
     # validation for the model
     plugin :validation_helpers

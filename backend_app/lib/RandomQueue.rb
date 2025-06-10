@@ -1,6 +1,6 @@
 require 'aws-sdk-sqs'
 require 'ostruct'
-require_relative '../models/tasks'
+require_relative '../models/users'
 
 module AIPersuasion
   # set up for the random task queue
