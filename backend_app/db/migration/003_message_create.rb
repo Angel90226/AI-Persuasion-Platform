@@ -8,8 +8,8 @@ Sequel.migration do
     create_table(:messages) do
       primary_key :id
       foreign_key :chat_id, :chats # Links message to a specific chat
-      String :role
-      String :response
+      String :role, null: false
+      String :response, null: false
       String :prompt_time
       DateTime :created_at
       DateTime :updated_at

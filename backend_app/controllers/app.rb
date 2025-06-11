@@ -19,22 +19,50 @@ module AIPersuasion
     # TASK_TYPES = %w[CREATIVE PRACTICAL].freeze
     BASE_PROMPT = 'Act as a travel advisor and provide technical insight on travel aspect suggestions. Write in active voice to make sentences more engaging and easier to follow. The user you are responding to needs to complete a writing task about airports. As the strict advisor, you must keep your replies less than 100 words and briefer is better.'
     # TEST_LOREM = 'lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-
-    # WELCOME_MESSAGE = 'Hello, I am your AI assistant. I have abundant traveling experiences and knowledge. How can I help you today?'
+    WELCOME_MESSAGE = 'Hello, I am your AI assistant. I have abundant traveling experiences and knowledge. How can I help you today?'
+    
     route do |r|
       r.get 'api' do
         response['Content-Type'] = 'application/json'
         response.status = 200
         { success: true, message: 'Welcome to the study' }.to_json
       end
-      # frontend api
-      r.public
-      r.root do
-        File.read(File.join('dist', 'index.html'))
+
+      r.post 'update_user' do
+        user_id = r.params['user_id'] || 'anonymous'
+        user = User.first(user_id: user_id)
+        if user.nil?
+          user = User.create(user_id: user_id)
+          Chat.create(user_id: user.id)
+        end
+        response.status = 201
+        { success: true, message: 'User (and chat) updated/created' }.to_json
       end
 
-      r.get [String, true], [String, true], [true] do |_parsed_request|
-        File.read(File.join('dist', 'index.html'))
+      r.get 'messages' do
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        user_id = r.params['user_id'] || 'anonymous'
+        user = User.first(user_id: user_id)
+        if user.nil?
+          user = User.create(user_id: user_id)
+          Chat.create(user_id: user.id)
+        end
+        new_chat = Chat.first(user_id: user.id)
+        if Message.where(chat_id: new_chat.id).all.empty?
+          Message.create(chat_id: new_chat.id, role: 'assistant', response: WELCOME_MESSAGE)
+        end
+        Message.where(chat_id: new_chat.id).map(&:values).to_json
+      end
+
+      r.post 'error-log' do
+        user_id = r.params['user_id'] || 'anonymous'
+        data = JSON.parse(r.body.read)
+        user = User.first(user_id: user_id)
+        new_chat = Chat.first(user_id: user.id)
+        error_log = Errorlog.create(chat_id: new_chat.id, error_message: data['error_message'])
+        response.status = 201
+        error_log.attributes.to_json
       end
 
       # streaming with openAI api in frontend assign prompt
@@ -47,11 +75,8 @@ module AIPersuasion
         data = JSON.parse(r.body.read)
 
         temp = data['temp'] || 0.7
-        new_chat = if Chat.first(user_id:).nil?
-                     Chat.create(user_id:)
-                   else
-                     Chat.first(user_id:)
-                   end
+        user = User.first(user_id: user_id)
+        new_chat = Chat.first(user_id: user.id)
 
         Message.create(chat_id: new_chat.id, role: 'user', response: data['message_content'],
                        prompt_time: data['prompt_time'])
@@ -75,12 +100,9 @@ module AIPersuasion
         data = JSON.parse(r.body.read)
         print 'data to store:', data
         role = data['role'] || 'user'
-        new_chat = if Chat.first(user_id:).nil?
-                     Chat.create(user_id:)
-                   else
-                     Chat.first(user_id:)
-                   end
-        Message.create(chat_id: new_chat.id, role:, response:)
+        user = User.first(user_id: user_id)
+        new_chat = Chat.first(user_id: user.id)
+        Message.create(chat_id: new_chat.id, role:, response: data['response'])
         Message.where(chat_id: new_chat.id).map(&:values).to_json
       end
     
@@ -125,6 +147,16 @@ module AIPersuasion
         response['Content-Type'] = 'application/json'
         response.status = 200
         { success: true, message: 'Queue cleared' }.to_json
+      end
+
+      # frontend api
+      r.public
+      r.root do
+        File.read(File.join('dist', 'index.html'))
+      end
+
+      r.get [String, true], [String, true], [true] do |_parsed_request|
+        File.read(File.join('dist', 'index.html'))
       end
     end
   end

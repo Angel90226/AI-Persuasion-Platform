@@ -7,6 +7,7 @@ module AIPersuasion
     plugin :validation_helpers
     plugin :timestamps, update_on_create: true
 
+    many_to_one :user, class: :'AIPersuasion::User'
     many_to_one :message, class: :'AIPersuasion::Message'
     one_to_one :manipulation_check, class: :'AIPersuasion::ManipulationCheck'
     one_to_one :choice, class: :'AIPersuasion::Choice'

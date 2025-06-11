@@ -18,17 +18,17 @@
             <p v-html="roleDescription"></p>
           </div>
           <template #footer>
-            <el-button type="success" @click="initialGreeting">I Understand</el-button>
+            <el-button type="success" @click="showRoleDialog = false">I Understand</el-button>
           </template>
         </el-dialog>
 
-        <el-header style="height: auto; padding: 20px; background: #fff; border-bottom: 1px solid #eee;">
-          <el-steps :active="currentStep" finish-status="success" simple>
+        <!-- <el-header style="height: auto; padding: 20px; background: #fff; border-bottom: 1px solid #eee;">
+          <el-steps :active="1" finish-status="success" simple>
             <el-step title="Role Briefing" description="Understand your responsibility"></el-step>
             <el-step title="Chat with AI" description="Get instructions"></el-step>
             <el-step title="Read Email" description="Check the request details"></el-step>
           </el-steps>
-        </el-header>
+        </el-header> -->
 
         <el-main>
           <el-row :gutter="20">
@@ -40,18 +40,18 @@
                 </div>
                 <div class="chat-messages" ref="messageContainer">
                   <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.type]">
-                    <div v-if="msg.type === 'bot'" class="avatar bot-avatar">
+                    <div v-if="msg.type === 'assistant'" class="avatar bot-avatar">
                       <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
                     </div>
                     <div class="bubble-content-with-timestamp" :class="msg.type">
                       <div
                         v-if="!msg.isDraft"
-                        :class="['bubble-text', msg.type === 'bot' ? 'bot-text' : 'user-text']"
+                        :class="['bubble-text', msg.type === 'assistant' ? 'bot-text' : 'user-text']"
                         v-html="msg.text"
                       ></div>
                       <div
                         v-else
-                        :class="['bubble-text', msg.type === 'bot' ? 'bot-text' : 'user-text', 'draft-reply']"
+                        :class="['bubble-text', msg.type === 'assistant' ? 'bot-text' : 'user-text', 'draft-reply']"
                         v-html="msg.text"
                       ></div>
                       <span class="bubble-timestamp-outside">
@@ -103,17 +103,19 @@
 </template>
 
 <script>
-import { ref, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
 import Constants from '../constant/Constants.vue'
 import axios from 'axios'
 import {marked} from "marked";
 
 export default {
   setup() {
+    const route = useRoute()
     const router = useRouter()
+    const store = useStore()
     const showRoleDialog = ref(true)
-    const currentStep = ref(1)
     const userInput = ref('')
     const messages = ref([])
     const showTyping = ref(false)
@@ -128,9 +130,61 @@ export default {
     const user_id = ref('anonymous');
     let promptStartTime=0
     let promptEndTime=0
+    let localData = {}
+
+    // shared store variables
+    const updateSharedVariable = (obj) => {
+      store.commit('updateSharedVariable', obj)
+    }
+
+    onMounted(async () => {
+      console.log('Component mounted');
+      readStorage();
+      await updateUser();
+      await initialMessages();
+    })
+
+    const readStorage=async()=> {
+      user_id.value = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+      if(user_id.value === 'anonymous'){
+        router.push({ path: '/missing' })
+      }
+      updateSharedVariable({'user_id': user_id.value});
+      localData['user_id'] = user_id.value
+      if (!localStorage.getItem(user_id.value)) {
+        localStorage.setItem(user_id.value, JSON.stringify(localData));
+      } else {
+        const data = localStorage.getItem(user_id.value);
+        localData = JSON.parse(data);
+      }
+    };
+
+    const updateUser = async () => {
+      try {
+        console.log('Updating user');
+        let api_url = "/update_user";
+        if(user_id.value !== 'anonymous'){
+          api_url = `/update_user?user_id=${user_id.value}`
+          ;
+        } 
+        await axios.post(api_url, {});
+      } catch (error) {
+        console.error('Failed to update user:', error);
+        sendError({error_message:"Failed to update user:"+ error});
+      }
+    }
+
+    watch(messages, () => {
+      // Wait for the next DOM update to scroll
+      nextTick(() => {
+        scrollToBottom();
+      });
+    }, { deep: true });
 
     // API related
-    const loadPreviousMessages = async ()=>{
+    const initialMessages = async ()=>{
+      if (user_id.value === 'anonymous') return;
+      
       try {
         let api_url = "/messages";
         if(user_id.value !== 'anonymous'){
@@ -144,8 +198,7 @@ export default {
             type: chat.role,
             timestamp: chat.created_at ? new Date(chat.created_at) : new Date(),
           }
-        
-        }); // Assuming the data is an array of messages
+        });
         nextTick(() => {
           scrollToBottom();
         });
@@ -153,14 +206,7 @@ export default {
         console.error("Failed to fetch initial messages:", error);
         sendError({error_message:"Failed to fetch initial messages:"+ error});
       }
-    
     }
-
-    // Call loadPreviousMessages when component is mounted
-    onMounted(() => {
-      loadPreviousMessages()
-    })
-
 
     const scrollToBottom = () => {
       nextTick(() => {
@@ -171,10 +217,10 @@ export default {
       })
     }
 
-    const initialGreeting = async () => {
-      showRoleDialog.value = false
-      await botSendMessage(`Hello! I'm NaviBot, an AI agent here to help you with your task. Please type 'START' to get the task started.`)
-    }
+    // const initialGreeting = async () => {
+    //   showRoleDialog.value = false
+    //   await botSendMessage(`Hello! I'm NaviBot, an AI agent here to help you with your task. Please type 'START' to get the task started.`)
+    // }
 
     //Create a message
     function createMessage(message,identity) {
@@ -185,6 +231,7 @@ export default {
         temp: currentTemp.value,
         timestamp: new Date(),
       });
+      console.log('messages:', messages.value);
       scrollToBottom();
     }
 
@@ -194,14 +241,14 @@ export default {
       const delay = options.delay || 1000
       await new Promise(resolve => setTimeout(resolve, delay))
       showTyping.value = false
-      createMessage('', 'bot');
+      createMessage('', 'assistant');
     }
 
-    const storeMessage = async (type, text) => {
+    const storeMessage = async (text, type) => {
       try {
         const postData = {
-          role: type,
           response: text,
+          role: type,
           prompt_time: new Date().toISOString()
       };
       console.log('Post Data:', postData);
@@ -232,7 +279,7 @@ export default {
       controller = new AbortController();
       const signal = controller.signal;
       try {
-        createMessage('', 'bot');
+        createMessage('', 'assistant');
         if(promptEndTime===0){
           promptEndTime=new Date().getTime();
         }
@@ -333,7 +380,7 @@ export default {
 
       try {
         // Store message in backend
-        await storeMessage('user',userInput.value)
+        // await storeMessage(userInput.value,'user')
 
         // Get streaming response
         await streamingResponse()
@@ -372,7 +419,6 @@ export default {
     // Return variables and methods to be used in the template
     return {
       showRoleDialog,
-      // currentStep,
       userInput,
       messages,
       showTyping,
@@ -384,7 +430,6 @@ export default {
       draftFeedback,
       botSendMessage,
       scrollToBottom,
-      initialGreeting,
       handleSend,
       formatTimestamp
     }

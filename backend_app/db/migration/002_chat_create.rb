@@ -10,5 +10,6 @@ Sequel.migration do
       DateTime :created_at
       DateTime :updated_at
     end
+    add_index :chats, :user_id, unique: true
   end
 end
