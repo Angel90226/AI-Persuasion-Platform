@@ -12,7 +12,7 @@
           class="role-intro-dialog"
         >
           <template #header>
-            <h2>Welcome to Your Role</h2>
+            <h2 class="role-intro-title">Welcome to Your Role</h2>
           </template>
           <div class="role-content">
             <p v-html="roleDescription"></p>
@@ -41,7 +41,7 @@
                 <div class="chat-messages" ref="messageContainer">
                   <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.type]">
                     <div v-if="msg.type === 'assistant'" class="avatar bot-avatar">
-                      <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
+                      <i class="mdi mdi-robot"></i>
                     </div>
                     <div class="bubble-content-with-timestamp" :class="msg.type">
                       <div
@@ -62,7 +62,7 @@
                   <!-- Typing animation -->
                   <div v-if="showTyping" class="chat-bubble bot">
                     <div class="avatar bot-avatar">
-                      <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
+                      <i class="mdi mdi-robot"></i>
                     </div>
                     <div class="bubble-content">
                       <div class="bubble-text bot-text typing">
@@ -83,12 +83,16 @@
               </div>
             </el-col>
             <!-- right: email (only show after 'start') -->
-            <el-col v-if="showEmail" :span="12" class="email-column">
-              <div style="padding: 32px;">
+            <el-col v-if="showEmail" :span="12" class="email-area">
+              <div class="email-window">
                 <div class="email-header">
-                  <h2>Request for New Printer Purchase</h2>
-                  <p><b>HR Department</b> &lt;hr@company.com&gt;</p>
-                  <p>{{ todayEmailDate }}</p>
+                  <h3>Request for New Printer Purchase</h3>
+                  <div class="email-sender">
+                    <i class="mdi mdi-account"></i>
+                    <span>HR department</span>
+                    <span class="email-address">&lt;hr@company.com&gt;</span>
+                    <span class="email-date">{{ todayEmailDate }}</span>
+                  </div>
                 </div>
                 <div class="email-content">
                   <p v-html="emailLongRequirement"></p>
@@ -109,6 +113,7 @@ import { useStore } from 'vuex'
 import Constants from '../constant/Constants.vue'
 import axios from 'axios'
 import {marked} from "marked";
+import '@mdi/font/css/materialdesignicons.css'
 
 export default {
   setup() {
@@ -485,6 +490,13 @@ export default {
 #pre-task {
   background: #fff;
   min-height: 100vh;
+  box-sizing: border-box;
+}
+.role-intro-title {
+  text-align: center;
+  color: #535953;
+  padding: 10px 0;
+  margin-top: 20px;
 }
 .role-intro-dialog :deep(.el-dialog__body) {
   padding: 20px 40px;
@@ -492,21 +504,22 @@ export default {
 .role-content {
   font-size: 16px;
   line-height: 1.6;
-  margin: 20px 0;
+  margin: 10px 10px;
 }
 .chat-app-window {
   width: 100%;
-  height: 540px;
+  height: calc(100vh - 40px); /* 減去上下padding的總和 */
   background: #232323;
   border-radius: 18px;
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 .chat-header {
   height: 54px;
-  background: #2A2A2A;
+  background: #535953;
   color: #fff;
   display: flex;
   align-items: center;
@@ -545,26 +558,25 @@ export default {
   align-self: flex-end;
 }
 .avatar {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  max-width: 36px;
-  max-height: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #222;
+  background: #535953;
   overflow: hidden;
+  position: relative;
 }
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 50%;
-  display: block;
+.avatar i {
+  font-size: 24px;
+  color: #fff;
+  position: relative;
+  top: -1px;
 }
 .bubble-content {
   flex: 1 1 auto;
@@ -582,20 +594,20 @@ export default {
   padding: 0 !important;
 }
 .bot-text {
-  background: #2A2A2A;
+  background: #535953;
   color: #fff;
 }
 .user-text {
-  background: #232323;
+  background: #535953;
   color: #fff;
-  border: 1px solid #444;
+  border: 1px solid #535953;
 }
 .typing {
   display: flex;
   align-items: center;
   gap: 2px;
   min-width: 36px;
-  background: #222;
+  background: #535953;
   color: #fff;
 }
 .dot {
@@ -631,13 +643,13 @@ export default {
 .chat-send-btn {
   min-width: 80px;
   height: 36px;
-  background: #2A2A2A;
+  background: #535953;
   border: none;
   border-radius: 18px;
   color: #fff;
 }
 .chat-send-btn:hover {
-  background: #444;
+  background: #535953;
 }
 .chatbot-area {
   height: 100%;
@@ -647,7 +659,7 @@ export default {
   justify-content: center;
 }
 .el-header {
-  background: #232323;
+  background: #535953;
   border-bottom: 1px solid #333;
   color: #fff;
 }
@@ -657,11 +669,46 @@ export default {
   border-left: 1px solid #eee;
   height: 100%;
 }
-.email-content {
+.email-window {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  overflow: hidden;
+  animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.email-header {
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 16px 24px;
+}
+.email-header h3 {
+  margin-bottom: 10px;
+}
+.email-content {
   padding: 24px;
-  color: #222;
+  background: #fff;
+}
+
+.email-content :deep(ul) {
+  padding-left: 24px;
+}
+
+.email-content :deep(li) {
+  margin-bottom: 12px;
+  line-height: 1.5;
 }
 .bubble-content-with-timestamp {
   display: flex;
@@ -687,5 +734,21 @@ export default {
 }
 .bubble-content-with-timestamp.user .bubble-timestamp-outside {
   text-align: left;
+}
+.email-address {
+  font-size: 0.9em;
+  color: #aaa;
+}
+.email-sender {
+  /* display: flex;
+  align-items: center;
+  gap: 8px; */
+  position: relative;
+}
+.email-date {
+  font-size: 0.9em;
+  color: #aaa;
+  position: absolute;
+  right: 0;
 }
 </style>
