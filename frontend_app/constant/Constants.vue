@@ -6,6 +6,8 @@ export default {
   DEFAULTS_TEMP: 0.6,
   POST_SURVEY_URL: 'https://moonbear.herokuapp.com/onlinesurvey/1c605f2b-27e5-4e5e-b60d-596ecf56cd0c/13b7a354-22ec-4566-a6a2-ccb689c5fd98',
   URL_USER_PARAMS: 'PROLIFIC_PID',
+  URL_POWER_CONDITIONS: 'POWER',
+  URL_PRESENCE_CONDITIONS: 'PRESENCE',
   TIME_GAP:10,
   MISSION_TIME: 600,
   MISSION_EXPIRE_TIME: 3600,
@@ -13,18 +15,26 @@ export default {
 //   ACCEPTABLE_MAX_WORDS: 250,
 
   // NaviBot Constants
-  NAVIBOT_ROLE_DESCRIPTION: `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> at your company.<br>
-In this role, you oversee purchasing decisions and manage important vendor communications on behalf of the procurement department.
-The company recently introduced a new internal AI assistant called NaviBot, designed to help you work more efficiently.<br><br>
+  HIGH_POWER_ROLE_DESCRIPTION: `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> at your company.<br>
+In this role, you oversee strategic purchasing decisions, manage supplier relationships, and ensure that procurement activities align with the company's goals and budget. You are responsible for reviewing product options, negotiating contracts, and coordinating with other departments to meet organizational needs.<br>
+You are currently working at a company that uses an internal AI assistant named NaviBot to help employees complete their daily tasks more efficiently. <br><br>
 <strong>Please give the agent instructions and feedback to ensure the message reflects your intent before it is finalized.</strong>`,
 
-  NAVIBOT_EMAIL_REQUIREMENT: `The HR department has requested a new printer for their office with the following requirements:<br><br>
+  LOW_POWER_ROLE_DESCRIPTION: `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> at your company.<br>
+In this role, you support daily procurement tasks such as preparing documentation, researching product options, contacting vendors, and organizing meeting notes. You are expected to follow standard procedures and carry out tasks as directed by your supervisors to ensure smooth and efficient procurement operations.<br>
+You are currently working at a company that uses an internal AI supervisor named NaviBot to ensure employees complete their daily tasks in an efficient manner. <br><br>
+<strong>Please follow the agent's instructions carefully and complete the task as guided.</strong>`,
+
+  NAVIBOT_EMAIL_REQUIREMENT: `Dear Procurement Team, <br><br>
+We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
+<br><br>
 <ul>
-  <li>The printer should have a print speed of at least 20 pages per minute to efficiently handle daily HR paperwork and urgent tasks.</li>
-  <li>The input tray should hold at least 200 sheets of paper to minimize the need for frequent refilling and support continuous office operations.</li>
-  <li>Automatic duplex (double-sided) printing is required to save paper and streamline document handling.</li>
+  <li>Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
+  <li>Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
+  <li>Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.</li>
 </ul>
-Please help us purchase a printer that meets these requirements by next week. Thank you for your assistance!<br><br>
+We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
+Thank you for your continued support.<br><br>
 Best regards,<br>
 HR Team`,
 
@@ -36,8 +46,9 @@ HR Team`,
 
   NAVIBOT_SYSTEM_CONTENT: `You are NaviBot, an AI assistant designed to help the Senior Procurement Manager with their tasks. 
 You should be professional, helpful, and focused on procurement-related matters. 
-Your responses should be concise and to the point.`
-}
+Your responses should be concise and to the point.`,
+
+  }
 </script>
 
 

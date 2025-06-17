@@ -18,7 +18,7 @@
             <p v-html="roleDescription"></p>
           </div>
           <template #footer>
-            <el-button type="success" @click="showRoleDialog = false">I Understand</el-button>
+            <el-button type="success" @click="onUnderstandClick">I Understand</el-button>
           </template>
         </el-dialog>
 
@@ -88,7 +88,7 @@
                 <div class="email-header">
                   <h2>Request for New Printer Purchase</h2>
                   <p><b>HR Department</b> &lt;hr@company.com&gt;</p>
-                  <p>2025/05/20 Tue 9:30 AM</p>
+                  <p>{{ todayEmailDate }}</p>
                 </div>
                 <div class="email-content">
                   <p v-html="emailLongRequirement"></p>
@@ -120,7 +120,9 @@ export default {
     const messages = ref([])
     const showTyping = ref(false)
     const showEmail = ref(false)
-    const roleDescription = ref(Constants.NAVIBOT_ROLE_DESCRIPTION)
+    const roleDescription = ref('')
+    const highPowerRoleDescription = ref(Constants.HIGH_POWER_ROLE_DESCRIPTION)
+    const lowPowerRoleDescription = ref(Constants.LOW_POWER_ROLE_DESCRIPTION)
     const emailLongRequirement = ref(Constants.NAVIBOT_EMAIL_REQUIREMENT)
     const navibotIntro = ref(Constants.NAVIBOT_INTRO)
     const draftEmail = ref(Constants.NAVIBOT_DRAFT_EMAIL)
@@ -128,6 +130,8 @@ export default {
     const currentTemp = ref(Constants.DEFAULTS_TEMP)
     const messageSending = ref(false);
     const user_id = ref('anonymous');
+    const power_condition = ref('');
+    const presence_condition = ref('');
     let promptStartTime=0
     let promptEndTime=0
     let localData = {}
@@ -139,10 +143,26 @@ export default {
 
     onMounted(async () => {
       console.log('Component mounted');
+      getConditions();
       readStorage();
       await updateUser();
-      await initialMessages();
     })
+
+    const getConditions = async () => {
+      power_condition.value = route.query[Constants.URL_POWER_CONDITIONS] || '';
+      presence_condition.value = route.query[Constants.URL_PRESENCE_CONDITIONS] || '';
+      if(power_condition.value === '' || presence_condition.value === ''){
+        router.push({ path: '/missing' })
+      }
+      console.log('Power Condition:', power_condition.value);
+      console.log('Presence Condition:', presence_condition.value);
+
+      if(power_condition.value === 'high'){
+        roleDescription.value = highPowerRoleDescription.value;
+      }else{
+        roleDescription.value = lowPowerRoleDescription.value;
+      }
+    }
 
     const readStorage=async()=> {
       user_id.value = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
@@ -181,16 +201,26 @@ export default {
       });
     }, { deep: true });
 
+    const onUnderstandClick = async () => {
+      showRoleDialog.value = false;
+      // load messages
+      await initialMessages();
+    }
+    
     // API related
     const initialMessages = async ()=>{
       if (user_id.value === 'anonymous') return;
       
       try {
+        showEmail.value = true;
         let api_url = "/messages";
         if(user_id.value !== 'anonymous'){
           api_url = `/messages?user_id=${user_id.value}`;
         } 
         const { data } = await axios.get(api_url);
+        if(data.length === 1){
+          await botSendMessage('', { delay: 1000 });
+        }
         messages.value = data.map( (chat)=>{
           return {
             id: chat.created_at,
@@ -231,7 +261,6 @@ export default {
         temp: currentTemp.value,
         timestamp: new Date(),
       });
-      console.log('messages:', messages.value);
       scrollToBottom();
     }
 
@@ -416,6 +445,17 @@ export default {
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     }
 
+    function getTodayString() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const weekDay = today.toLocaleDateString('en-US', { weekday: 'short' }); // e.g. Mon, Tue
+      return `${year}/${month}/${day} ${weekDay} 9:30 AM`;
+    }
+
+    const todayEmailDate = ref(getTodayString());
+
     // Return variables and methods to be used in the template
     return {
       showRoleDialog,
@@ -424,6 +464,8 @@ export default {
       showTyping,
       showEmail,
       roleDescription,
+      highPowerRoleDescription,
+      lowPowerRoleDescription,
       emailLongRequirement,
       navibotIntro,
       draftEmail,
@@ -431,7 +473,9 @@ export default {
       botSendMessage,
       scrollToBottom,
       handleSend,
-      formatTimestamp
+      formatTimestamp,
+      todayEmailDate,
+      onUnderstandClick
     }
   }
 }
