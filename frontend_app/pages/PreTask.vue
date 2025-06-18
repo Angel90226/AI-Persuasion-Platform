@@ -77,8 +77,15 @@
                     placeholder="Type here..."
                     class="chat-input"
                     @keyup.enter.native="handleSend"
+                    :disabled="messageSending"
                   />
-                  <el-button type="primary" class="chat-send-btn" @click="handleSend">Send</el-button>
+                  <el-button
+                    type="primary"
+                    class="chat-send-btn"
+                    @click="handleSend"
+                    :disabled="messageSending"
+                    :loading="messageSending"
+                  >Send</el-button>
                 </div>
               </div>
             </el-col>
@@ -204,6 +211,18 @@ export default {
       nextTick(() => {
         scrollToBottom();
       });
+      // 新增：偵測 bot 是否回覆 "sending out the email..."
+      const lastMsg = messages.value[messages.value.length - 1];
+      if (
+        lastMsg &&
+        lastMsg.type === 'assistant' &&
+        typeof lastMsg.text === 'string' &&
+        lastMsg.text.toLowerCase().includes('sending out the email...')
+      ) {
+        setTimeout(() => {
+          router.push({ path: '/main-task' });
+        }, 1500); // 1.5 秒後跳轉，可依需求調整
+      }
     }, { deep: true });
 
     const onUnderstandClick = async () => {
@@ -336,6 +355,7 @@ export default {
         promptEndTime=0;
         userInput.value = '';
         // disabled the sender button
+        
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8",{ stream: true });
 
@@ -508,7 +528,7 @@ export default {
 }
 .chat-app-window {
   width: 100%;
-  height: calc(100vh - 40px); /* 減去上下padding的總和 */
+  height: calc(100vh - 40px);
   background: #232323;
   border-radius: 18px;
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
