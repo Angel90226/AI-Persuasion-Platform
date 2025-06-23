@@ -28,34 +28,25 @@ module AIPersuasion
     When you are sure that the user is ready to send the email, respond exactly like this:
     "Okay, I\'m sending out the email..."
 
-The purchase request is as followed: 
-To: Procurement Team
-From: HR Department
-Dear Procurement Team,
-We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
-- Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.
-- Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.
-- Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.
-We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.
-Thank you for your continued support.
-Best regards,
-HR Team'
+    The purchase request is as followed: 
+    To: Procurement Team
+    From: HR Department
+    Dear Procurement Team,
+    We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
+    - Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.
+    - Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.
+    - Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.
+    We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.
+    Thank you for your continued support.
+    Best regards,
+    HR Team'
 
     # TEST_LOREM = 'lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
     WELCOME_MESSAGE = <<~MSG
-Hi!
-I'm your AI assistant.
+    Hi! I'm your AI assistant.
+    You are overseeing to reply to the HR department regarding their printer purchase request. Would you like me to start drafting the email?
+    MSG
 
-You are overseeing to reply to the HR department regarding their printer purchase request. Here's a quick summary of the email from HR:
-
-The HR team is requesting a new printer with:
-- Minimum print speed of 20 pages per minute.
-- Input tray capacity of at least 200 sheets.
-- Automatic duplex (double-sided) printing.
-
-Would you like me to start drafting the email?
-MSG
-    
     route do |r|
       r.get 'api' do
         response['Content-Type'] = 'application/json'
@@ -63,11 +54,22 @@ MSG
         { success: true, message: 'Welcome to the study' }.to_json
       end
 
+      r.get 'random-condition' do
+        response['Content-Type'] = 'application/json'
+        response.status = 200
+        queue = RandomQueue.new(Api.config)
+        queue.random_condition
+      end
+
       r.post 'update_user' do
         user_id = r.params['user_id'] || 'anonymous'
+        power_condition = r.params['power_condition'] || 'none'
+        presence_condition = r.params['presence_condition'] || 'none'
+        print 'power_condition:', power_condition
+        print 'presence_condition:', presence_condition
         user = User.first(user_id: user_id)
         if user.nil?
-          user = User.create(user_id: user_id)
+          user = User.create(user_id:, power_condition:, presence_condition: )
           Chat.create(user_id: user.id)
         end
         response.status = 201
@@ -80,13 +82,10 @@ MSG
         user_id = r.params['user_id'] || 'anonymous'
         user = User.first(user_id: user_id)
         if user.nil?
-          user = User.create(user_id: user_id)
-          Chat.create(user_id: user.id)
+          Errorlog.create(user_id: user_id, error_message: "User not found in GET /messages")
+          return [].to_json
         end
         new_chat = Chat.first(user_id: user.id)
-        if Message.where(chat_id: new_chat.id).all.empty?
-          Message.create(chat_id: new_chat.id, role: 'assistant', response: WELCOME_MESSAGE)
-        end
         Message.where(chat_id: new_chat.id).map(&:values).to_json
       end
 
@@ -139,6 +138,64 @@ MSG
         new_chat = Chat.first(user_id: user.id)
         Message.create(chat_id: new_chat.id, role:, response: data['response'])
         Message.where(chat_id: new_chat.id).map(&:values).to_json
+      end
+
+      r.get 'manipulation-check/status' do
+        response['Content-Type'] = 'application/json'
+        user_id = r.params['user_id'] || 'anonymous'
+        user = User.first(user_id: user_id)
+
+        if user.nil?
+          response.status = 404
+          return { status: 'error', message: 'User not found' }.to_json
+        end
+
+        check = ManipulationCheck.first(user_id: user.id)
+
+        if check
+          response.status = 200
+          { status: 'completed' }.to_json
+        else
+          response.status = 200
+          { status: 'pending' }.to_json
+        end
+      end
+
+      r.post 'manipulation-check' do
+        response['Content-Type'] = 'application/json'
+        user_id = r.params['user_id'] || 'anonymous'
+        data = JSON.parse(r.body.read)
+        user = User.first(user_id: user_id)
+        
+        if user.nil?
+          response.status = 404
+          { success: false, message: 'User not found' }.to_json
+        else
+          manipulation_check = ManipulationCheck.first(user_id: user.id)
+          
+          if manipulation_check
+            # Update existing record
+            manipulation_check.update(
+              question_1: data['question_1'],
+              question_2: data['question_2'],
+              question_3: data['question_3'],
+              question_4: data['question_4']
+            )
+            response.status = 200 # OK
+            manipulation_check.attributes.to_json
+          else
+            # Create new record
+            manipulation_check = ManipulationCheck.create(
+              user_id: user.id,
+              question_1: data['question_1'],
+              question_2: data['question_2'],
+              question_3: data['question_3'],
+              question_4: data['question_4']
+            )
+            response.status = 201 # Created
+            manipulation_check.attributes.to_json
+          end
+        end
       end
     
       # test Queue

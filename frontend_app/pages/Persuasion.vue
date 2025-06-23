@@ -315,7 +315,14 @@ export default {
   },
   created() {
     window.scrollTo(0, 0);
-    this.firstSelection = this.$route.query.first;
+    this.firstSelection = localStorage.getItem('firstSelection');
+
+    // 從 localStorage 取得 printerOrder 並重組 printers 順序
+    const order = JSON.parse(localStorage.getItem('printerOrder') || '[]');
+    if (order.length === 2) {
+      this.printers = order.map(id => this.printers.find(p => p.id === id));
+    }
+
     this.messageSegments = this.persuasionSegments;
     // 顯示 loading 動畫後再逐段顯示訊息
     setTimeout(() => {

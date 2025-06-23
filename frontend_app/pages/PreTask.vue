@@ -15,10 +15,11 @@
             <h2 class="role-intro-title">Welcome to Your Role</h2>
           </template>
           <div class="role-content">
-            <p v-html="roleDescription"></p>
+            <el-skeleton v-if="isLoadingRole" :rows="5" animated />
+            <p v-else v-html="roleDescription"></p>
           </div>
           <template #footer>
-            <el-button type="success" @click="onUnderstandClick">I Understand</el-button>
+            <el-button type="success" @click="onUnderstandClick" :disabled="isLoadingRole">I Understand</el-button>
           </template>
         </el-dialog>
 
@@ -133,8 +134,7 @@ export default {
     const showTyping = ref(false)
     const showEmail = ref(false)
     const roleDescription = ref('')
-    const highPowerRoleDescription = ref(Constants.HIGH_POWER_ROLE_DESCRIPTION)
-    const lowPowerRoleDescription = ref(Constants.LOW_POWER_ROLE_DESCRIPTION)
+    const isLoadingRole = ref(true);
     const emailLongRequirement = ref(Constants.NAVIBOT_EMAIL_REQUIREMENT)
     const navibotIntro = ref(Constants.NAVIBOT_INTRO)
     const draftEmail = ref(Constants.NAVIBOT_DRAFT_EMAIL)
@@ -142,8 +142,6 @@ export default {
     const currentTemp = ref(Constants.DEFAULTS_TEMP)
     const messageSending = ref(false);
     const user_id = ref('anonymous');
-    const power_condition = ref('');
-    const presence_condition = ref('');
     let promptStartTime=0
     let promptEndTime=0
     let localData = {}
@@ -154,35 +152,21 @@ export default {
     }
 
     onMounted(async () => {
-      console.log('Component mounted');
-      getConditions();
-      readStorage();
+      console.log('PreTask mounted');
+      getUser();
+      await getCondition();
       await updateUser();
     })
 
-    const getConditions = async () => {
-      power_condition.value = route.query[Constants.URL_POWER_CONDITIONS] || '';
-      presence_condition.value = route.query[Constants.URL_PRESENCE_CONDITIONS] || '';
-      if(power_condition.value === '' || presence_condition.value === ''){
-        router.push({ path: '/missing' })
-      }
-      console.log('Power Condition:', power_condition.value);
-      console.log('Presence Condition:', presence_condition.value);
-
-      if(power_condition.value === 'high'){
-        roleDescription.value = highPowerRoleDescription.value;
-      }else{
-        roleDescription.value = lowPowerRoleDescription.value;
-      }
-    }
-
-    const readStorage=async()=> {
+    const getUser=async()=> {
       user_id.value = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+      
       if(user_id.value === 'anonymous'){
         router.push({ path: '/missing' })
       }
       updateSharedVariable({'user_id': user_id.value});
       localData['user_id'] = user_id.value
+      // update local storage
       if (!localStorage.getItem(user_id.value)) {
         localStorage.setItem(user_id.value, JSON.stringify(localData));
       } else {
@@ -191,12 +175,46 @@ export default {
       }
     };
 
+    const getCondition = async () => {
+      // // check if the condition is set in the url
+      // const encodedConditions = route.query[Constants.URL_CONDITION_PARAMS] || 'none';
+      // console.log('Includes:', Object.values(Constants.CONDITION_BASE64).includes(encodedConditions));
+      // if(Object.values(Constants.CONDITION_BASE64).includes(encodedConditions)){
+      //   conditions.value = JSON.parse(atob(encodedConditions))
+      //   localData['condition'] = conditions.value;
+      //   localStorage.setItem(user_id.value, JSON.stringify(localData))
+      // }
+      if(!localData['condition']||localData['condition'].expire_time < new Date().getTime()){
+        try{
+          console.log('Random Condition'); 
+          let api_url = "/random-condition";
+          if(user_id.value !== 'anonymous'){
+            api_url = `/random-condition?user_id=${user_id.value}`;
+          } 
+          const { data } = await axios.get(api_url);
+          updateSharedVariable({ 'condition': data })
+          data.expire_time = new Date().getTime() + Constants.MISSION_EXPIRE_TIME*1000;
+          localData['condition'] = data;
+          localStorage.setItem(user_id.value, JSON.stringify(localData))    
+        } catch (error) {
+          console.error('Failed to fetch task:', error);
+          location.reload();
+          sendError({error_message:"Failed to fetch task:"+ error});
+        }
+      }
+      if(localData['condition'].power_condition === 'high'){
+        roleDescription.value = Constants.HIGH_POWER_ROLE_DESCRIPTION;
+      }else{
+        roleDescription.value = Constants.LOW_POWER_ROLE_DESCRIPTION;
+      }
+      isLoadingRole.value = false;
+    }
     const updateUser = async () => {
       try {
         console.log('Updating user');
         let api_url = "/update_user";
         if(user_id.value !== 'anonymous'){
-          api_url = `/update_user?user_id=${user_id.value}`
+          api_url = `/update_user?user_id=${user_id.value}&power_condition=${localData['condition'].power_condition}&presence_condition=${localData['condition'].presence_condition}`
           ;
         } 
         await axios.post(api_url, {});
@@ -211,7 +229,6 @@ export default {
       nextTick(() => {
         scrollToBottom();
       });
-      // 新增：偵測 bot 是否回覆 "sending out the email..."
       const lastMsg = messages.value[messages.value.length - 1];
       if (
         lastMsg &&
@@ -220,8 +237,8 @@ export default {
         lastMsg.text.toLowerCase().includes('sending out the email...')
       ) {
         setTimeout(() => {
-          router.push({ path: '/main-task' });
-        }, 1500); // 1.5 秒後跳轉，可依需求調整
+          router.push({ path: '/main-task', query: route.query });
+        }, 1500);
       }
     }, { deep: true });
 
@@ -241,18 +258,42 @@ export default {
         if(user_id.value !== 'anonymous'){
           api_url = `/messages?user_id=${user_id.value}`;
         } 
-        const { data } = await axios.get(api_url);
-        if(data.length === 1){
-          await botSendMessage('', { delay: 1000 });
-        }
-        messages.value = data.map( (chat)=>{
-          return {
-            id: chat.created_at,
-            text: marked(chat.response),
-            type: chat.role,
-            timestamp: chat.created_at ? new Date(chat.created_at) : new Date(),
+        const { data } = await axios.get(api_url, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'Expires': '0',
           }
         });
+
+        if(data.length > 0){
+          messages.value = data.map( (chat)=>{
+            return {
+              id: chat.created_at,
+              text: marked.parse(chat.response),
+              type: chat.role,
+              timestamp: chat.created_at ? new Date(chat.created_at) : new Date(),
+            }
+          });
+          if(messages.value.some(m => m.type === 'assistant' && m.text.toLowerCase().includes('sending out the email...'))){
+             setTimeout(() => {
+              router.push({ path: '/main-task', query: route.query });
+            }, 1500);
+          }
+        } else {
+           // No history, show welcome message with typewriter effect
+          createMessage('', 'assistant'); // Create an empty bubble first
+          const streaming_message = ref('');
+          const welcomeText = navibotIntro.value;
+          const tokens = welcomeText.split(/(\s+)/); // Split by space, keeping the spaces
+          for (const token of tokens) {
+            if (token) {
+              await animateStreamedText(token, streaming_message);
+            }
+          }
+          await storeMessage(streaming_message.value, 'assistant');
+        }
+        
         nextTick(() => {
           scrollToBottom();
         });
@@ -270,11 +311,6 @@ export default {
         }
       })
     }
-
-    // const initialGreeting = async () => {
-    //   showRoleDialog.value = false
-    //   await botSendMessage(`Hello! I'm NaviBot, an AI agent here to help you with your task. Please type 'START' to get the task started.`)
-    // }
 
     //Create a message
     function createMessage(message,identity) {
@@ -319,11 +355,30 @@ export default {
     }
 
     let controller = null;
+
+    // Helper function to animate text display character by character
+    const animateStreamedText = async (token, streaming_message_ref) => {
+      streaming_message_ref.value += token;
+      messages.value[messages.value.length - 1]["text"] = marked.parse(streaming_message_ref.value);
+      scrollToBottom();
+
+      // Determine delay based on token content (punctuation can be slower)
+      const delay = getDelay(token);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    };
+
+    const getDelay = (token) => {
+      if (token.match(/[.!?]/)) return 350;
+      if (token.match(/[,;]/)) return 150;
+      return 20 + Math.random() * 40;
+    };
+
     const streamingResponse = async () => {
       messageSending.value = true;
       let insufficient=false;
       let save_message = '';
-      let streaming_message = '';
+      // let streaming_message = '';
+      const streaming_message = ref(''); // Use a ref to pass to the helper function
       let api_url = "/openAI-streaming";
       if(user_id.value !== 'anonymous'){
         api_url = `/openAI-streaming?user_id=${user_id.value}`
@@ -400,14 +455,14 @@ export default {
             const { delta } = choices[0];
             const { content } = delta;
             if(content){
-              streaming_message += content;
-              messages.value[messages.value.length - 1]["text"] = marked(streaming_message);
-            }         
+              // streaming_message += content;
+              // messages.value[messages.value.length - 1]["text"] = marked(streaming_message);
+              await animateStreamedText(content, streaming_message);
+            }
             // console.log('Store to messages:', messages.value[messages.value.length - 1]);
             // console.log('Streaming Response:', streaming_message);
             // createMessage(marked(parsedLine.response), "assistant");
           }
-
         }
 
         // console.log('Streaming Response:', data);
@@ -422,7 +477,7 @@ export default {
         controller = null;
         messageSending.value = false;
         // send API to backend
-        await storeMessage(streaming_message,'assistant');
+        await storeMessage(streaming_message.value,'assistant');
       }
     }
 
@@ -430,11 +485,13 @@ export default {
       if (!userInput.value.trim()) return
       
       // Add user message
-      createMessage(marked(userInput.value),'user');
-
+      const userMessageText = userInput.value;
+      createMessage(marked.parse(userMessageText),'user');
+      userInput.value = ''; // Clear input immediately
+      
       try {
         // Store message in backend
-        // await storeMessage(userInput.value,'user')
+        await storeMessage(userMessageText,'user')
 
         // Get streaming response
         await streamingResponse()
@@ -487,10 +544,9 @@ export default {
       userInput,
       messages,
       showTyping,
+      messageSending,
       showEmail,
       roleDescription,
-      highPowerRoleDescription,
-      lowPowerRoleDescription,
       emailLongRequirement,
       navibotIntro,
       draftEmail,
@@ -500,7 +556,8 @@ export default {
       handleSend,
       formatTimestamp,
       todayEmailDate,
-      onUnderstandClick
+      onUnderstandClick,
+      isLoadingRole
     }
   }
 }
@@ -514,7 +571,7 @@ export default {
 }
 .role-intro-title {
   text-align: center;
-  color: #535953;
+  color: #515751;
   padding: 10px 0;
   margin-top: 20px;
 }
@@ -539,7 +596,7 @@ export default {
 }
 .chat-header {
   height: 54px;
-  background: #535953;
+  background: #515751;
   color: #fff;
   display: flex;
   align-items: center;
@@ -588,7 +645,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #535953;
+  background: #515751;
   overflow: hidden;
   position: relative;
 }
@@ -614,20 +671,20 @@ export default {
   padding: 0 !important;
 }
 .bot-text {
-  background: #535953;
+  background: #515751;
   color: #fff;
 }
 .user-text {
-  background: #535953;
+  background: #515751;
   color: #fff;
-  border: 1px solid #535953;
+  border: 1px solid #515751;
 }
 .typing {
   display: flex;
   align-items: center;
   gap: 2px;
   min-width: 36px;
-  background: #535953;
+  background: #515751;
   color: #fff;
 }
 .dot {
@@ -663,13 +720,13 @@ export default {
 .chat-send-btn {
   min-width: 80px;
   height: 36px;
-  background: #535953;
+  background: #515751;
   border: none;
   border-radius: 18px;
   color: #fff;
 }
 .chat-send-btn:hover {
-  background: #535953;
+  background: #515751;
 }
 .chatbot-area {
   height: 100%;
@@ -679,7 +736,7 @@ export default {
   justify-content: center;
 }
 .el-header {
-  background: #535953;
+  background: #515751;
   border-bottom: 1px solid #333;
   color: #fff;
 }

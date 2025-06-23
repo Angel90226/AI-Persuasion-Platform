@@ -153,133 +153,130 @@
 </template>
 
 <script>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import axios from 'axios'
 import canonImg from '../static/canon.jpg'
 import hpImg from '../static/hp.jpg'
+import Constants from '../constant/Constants.vue'
+
 export default {
   name: 'MainTask',
-  data() {
-    return {
-      showPowerCheck: true,
-      powerScores: [null, null, null, null],
-      manipulationQuestions: [
-        'In my interactions with the AI agent, I felt I could get the AI agent to listen to what I say.',
-        'In my interaction with the AI agent, if I want to, I get to make the decisions.',
-        "My preferences didn't seem to carry much weight with the AI agent.",
-        'I felt my ideas and opinions were often ignored by the AI agent.'
-      ],
-      likertLabels: [
-        'Strongly Disagree',
-        'Disagree',
-        'Somewhat Disagree',
-        'Either Agree or Disagree',
-        'Somewhat Agree',
-        'Agree',
-        'Strongly Agree'
-      ],
-      selectedPrinter: null,
-      showDetailDialog: false,
-      detailPrinter: null,
-      showInstructionDialog: false,
-      mainTaskInstruction: `Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>
-<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`,
-      printers: [
-        {
-          id: 'canon',
-          name: 'Canon PIXMA TR7820',
-          brand: 'Canon',
-          image: canonImg,
-          price: 129.00,
-          specs: [
-            'All-in-One: Print, Copy, Scan',
-            'Print Speed: 15 ppm (black), 10 ppm (color)',
-            '2.7" LCD Touchscreen',
-            'Auto-Duplex, Auto Document Feeder',
-            'Wireless & USB',
-            '100-sheet paper capacity',
-            'Color: White'
-          ],
-          fullSpecs: [
-            'Model: PIXMA TR7820',
-            'Dimensions: 15.9 x 14.2 x 8.2 inches',
-            'Weight: 16 lbs',
-            'Max Print Size: 8.5" x 11"',
-            'Print Resolution: Up to 4800 x 1200 dpi',
-            'Connectivity: USB, Wireless',
-            'Paper Capacity: 100 sheets (cassette), 100 sheets (rear tray)',
-            'ADF: 35 sheets',
-            'Display: 2.7" LCD Touchscreen',
-            'Compatible OS: Windows, Mac, Mobile',
-            'Warranty: 1 year'
-          ],
-          features: [
-            'Easy setup and maintenance',
-            'Hybrid ink system for sharp text and vivid photos',
-            'Poster Artist Online for banners and signage',
-            'Energy Star certified'
-          ],
-          reviews: [
-            { user: 'Alice', stars: 5, text: 'Great print quality and easy to use!' },
-            { user: 'Bob', stars: 4, text: 'Setup was quick, but color printing is a bit slow.' }
-          ]
-        },
-        {
-          id: 'hp',
-          name: 'HP OfficeJet Pro 8025e',
-          brand: 'HP',
-          image: hpImg,
-          price: 69.99,
-          specs: [
-            'All-in-One: Print, Copy, Scan, Fax',
-            'Print Speed: 20 ppm (black), 10 ppm (color)',
-            '2.7" Color Touchscreen',
-            'Auto-Duplex, Auto Document Feeder',
-            'Wireless, Ethernet, USB',
-            '225-sheet input tray',
-            'Color: Gray'
-          ],
-          fullSpecs: [
-            'Model: OfficeJet Pro 8025e',
-            'Dimensions: 18.1 x 20.1 x 9.2 inches',
-            'Weight: 18 lbs',
-            'Max Print Size: 8.5" x 14"',
-            'Print Resolution: Up to 4800 x 1200 dpi',
-            'Connectivity: USB, Wireless, Ethernet',
-            'Paper Capacity: 225 sheets',
-            'ADF: 35 sheets',
-            'Display: 2.7" Color Touchscreen',
-            'Compatible OS: Windows, Mac, Mobile',
-            'Warranty: 1 year'
-          ],
-          features: [
-            'Smart Tasks shortcuts for productivity',
-            'Self-healing Wi-Fi',
-            'HP+ Smart Printing System',
-            'Energy Star certified'
-          ],
-          reviews: [
-            { user: 'Carol', stars: 5, text: 'Fast printing and lots of features for the price.' },
-            { user: 'David', stars: 4, text: 'Good value, but setup took a bit longer than expected.' }
-          ]
+  setup() {
+    const router = useRouter()
+    const route = useRoute()
+    const store = useStore()
+
+    // State
+    const showPowerCheck = ref(true)
+    const powerScores = ref([null, null, null, null])
+    const manipulationQuestions = ref(Constants.MANIPULATION_QUESTIONS)
+    const likertLabels = ref(Constants.LIKERT_LABELS)
+    const selectedPrinter = ref(null)
+    const showDetailDialog = ref(false)
+    const detailPrinter = ref(null)
+    const showInstructionDialog = ref(false)
+    const mainTaskInstruction = ref(`Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>
+<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`)
+
+    onMounted(() => {
+      console.log('MainTask mounted');
+      checkManipulationCheckStatus();
+    });
+
+    const checkManipulationCheckStatus = async () => {
+      const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+      if (user_id === 'anonymous') {
+        console.log("User ID not found.");
+        router.push({ path: '/missing' });
+        return;
+      }
+      try {
+        const api_url = `/manipulation-check/status?user_id=${user_id}`;
+        const { data } = await axios.get(api_url);
+        if (data.status === 'completed') {
+          showPowerCheck.value = false;
+          showInstructionDialog.value = true;
+        } else {
+          showPowerCheck.value = true;
         }
-      ]
+      } catch (error) {
+        console.error('Failed to check manipulation check status:', error);
+        // Fallback to showing the check if API fails
+        showPowerCheck.value = true;
+      }
+    };
+
+    // Methods
+    const closePowerCheck = async () => {
+      try {
+        const user_id = store.state.sharedVariable.user_id
+        const api_url = `/manipulation-check?user_id=${user_id}`
+        
+        await axios.post(api_url, {
+          question_1: powerScores.value[0],
+          question_2: powerScores.value[1],
+          question_3: powerScores.value[2],
+          question_4: powerScores.value[3]
+        })
+        
+        showPowerCheck.value = false
+        showInstructionDialog.value = true
+      } catch (error) {
+        console.error('Failed to save manipulation check:', error)
+        // Still proceed with the UI flow even if saving fails
+        showPowerCheck.value = false
+        showInstructionDialog.value = true
+      }
     }
-  },
-  methods: {
-    closePowerCheck() {
-      this.showPowerCheck = false;
-      this.showInstructionDialog = true;
-      // 之後可在這裡處理 powerScore 上傳或其他邏輯
-    },
-    selectPrinter(id) {
-      this.selectedPrinter = id;
-    },
-    confirmSelection() {
-      // 跳轉到 persuasion 階段 route，並帶上第一次選擇
-      this.$router.push({ path: '/persuasion', query: { first: this.selectedPrinter } });
-    },
-    showPrinterDetail(printer) {
-      this.detailPrinter = printer;
-      this.showDetailDialog = true;
+
+    const selectPrinter = (id) => {
+      selectedPrinter.value = id
+    }
+
+    const confirmSelection = () => {
+      const user_id = store.state.sharedVariable.user_id
+      const printerOrder = printers.value.map(p => p.id);
+      let localData = JSON.parse(localStorage.getItem(user_id)) || {};
+      localData['printerOrder'] = printerOrder.join(',');
+      localData['firstSelection'] = selectedPrinter.value;
+      localStorage.setItem(user_id, JSON.stringify(localData));
+      router.push({ path: '/persuasion', query: route.query });
+    }
+
+    const showPrinterDetail = (printer) => {
+      detailPrinter.value = printer
+      showDetailDialog.value = true
+    }
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    const printers = ref(
+      shuffle(Constants.PRINTERS.map(printer => ({
+        ...printer,
+        image: printer.id === 'canon' ? canonImg : hpImg
+      })))
+    );
+
+    // Return everything that needs to be used in the template
+    return {
+      showPowerCheck,
+      powerScores,
+      manipulationQuestions,
+      likertLabels,
+      selectedPrinter,
+      showDetailDialog,
+      detailPrinter,
+      showInstructionDialog,
+      mainTaskInstruction,
+      printers,
+      closePowerCheck,
+      selectPrinter,
+      confirmSelection,
+      showPrinterDetail
     }
   }
 }

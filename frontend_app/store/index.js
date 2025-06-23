@@ -5,6 +5,7 @@ export default createStore({
   state: reactive({
     sharedVariable: {
       'user_id': '',
+      'condition': '',
       submitted: false
     }
   }),
