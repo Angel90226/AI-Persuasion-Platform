@@ -1,7 +1,7 @@
 import { createRouter, createMemoryHistory, createWebHistory } from 'vue-router';
 import PreTask from '../pages/PreTask.vue'
 import MainTask from '../pages/MainTask.vue'
-import Persuasion from '../pages/Persuasion.vue'
+import FollowUp from '../pages/FollowUp.vue'
 import Missing from '../pages/Missing.vue'
 
 const routes = [
@@ -16,9 +16,9 @@ const routes = [
     component: MainTask,
   },
   {
-    path: '/persuasion',
-    name: 'Persuasion',
-    component: Persuasion
+    path: '/followup',
+    name: 'FollowUp',
+    component: FollowUp
   },
   {
     path: '/missing',

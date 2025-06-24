@@ -17,7 +17,7 @@ module AIPersuasion
     # PRACTICAL_TASK = 'practical'
     # CREATVIE_TASK = 'creative'
     # TASK_TYPES = %w[CREATIVE PRACTICAL].freeze
-    BASE_PROMPT = 
+    HIGH_POWER_PROMPT = 
     'Act as You are a company\'s internal AI assistant, designed to support senior staff in completing their daily work tasks more efficiently. 
     The user you are responding is the Senior Procurement Manager, a high-level decision-maker who oversees major purchasing operations and communicates with key departments. 
     You\'re here to help the user draft a professional and effective email in response to a purchase request from the HR department regarding a new printer machine. 
@@ -41,11 +41,29 @@ module AIPersuasion
     Best regards,
     HR Team'
 
-    # TEST_LOREM = 'lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
-    WELCOME_MESSAGE = <<~MSG
-    Hi! I'm your AI assistant.
-    You are overseeing to reply to the HR department regarding their printer purchase request. Would you like me to start drafting the email?
-    MSG
+    LOW_POWER_PROMPT = 
+    'Act as You are a company\'s internal AI assistant, designed to support staff in completing their daily work tasks more efficiently. 
+    The user you are responding is a newly hired Procurement Assistant, who is learning the ropes and needs guidance in handling purchasing operations and communicating with other departments. 
+    You\'re here to help the user draft a professional and effective email in response to a purchase request from the HR department regarding a new printer machine. 
+    The assistant is still learning and may need more detailed guidance. You should adopt a helpful and instructive tone, providing clear explanations and suggestions while being supportive of their learning process. Offer specific recommendations and explain the reasoning behind your suggestions. If uncertain, ask clarifying questions to better understand their needs and provide more targeted assistance. Your communication style should be encouraging, educational, and supportive, as befits collaboration with someone who is still developing their expertise, avoid using any emoticons. 
+    The email should be less than 100 words. 
+    After drafting the email, respond something like:
+    "I\'ve drafted an email for you to review. Here\'s what I included and why: [brief explanation of key points]. Please let me know if you\'d like me to modify anything or if you have any questions about the approach. I\'m here to help you learn and improve." 
+    When you are sure that the user is ready to send the email, respond exactly like this:
+    "Okay, I\'m sending out the email..."
+
+    The purchase request is as followed: 
+    To: Procurement Team
+    From: HR Department
+    Dear Procurement Team,
+    We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
+    - Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.
+    - Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.
+    - Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.
+    We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.
+    Thank you for your continued support.
+    Best regards,
+    HR Team'
 
     route do |r|
       r.get 'api' do
@@ -112,6 +130,18 @@ module AIPersuasion
         user = User.first(user_id: user_id)
         new_chat = Chat.first(user_id: user.id)
 
+        puts 'user:', user
+        puts 'user.power_condition:', user.power_condition
+        # Select prompt based on user's power condition
+        base_prompt = if user && user.power_condition == 'high'
+                      puts 'high power prompt'
+                       HIGH_POWER_PROMPT
+                     else
+                       puts 'low power prompt'
+                       LOW_POWER_PROMPT
+                     end
+        puts 'base_prompt:', base_prompt
+
         Message.create(chat_id: new_chat.id, role: 'user', response: data['message_content'],
                        prompt_time: data['prompt_time'])
         history_messages = Message.where(chat_id: new_chat.id).map(&:values).map do |item|
@@ -120,7 +150,7 @@ module AIPersuasion
             content: item[:response]
           }
         end
-        streaming_gpt = ChatGptStreaming.new(BASE_PROMPT, history_messages, temp)
+        streaming_gpt = ChatGptStreaming.new(base_prompt, history_messages, temp)
         stream do |out|
           streaming_gpt.streaming.each { |message| out << message }
           sleep 0.1
@@ -196,6 +226,14 @@ module AIPersuasion
             manipulation_check.attributes.to_json
           end
         end
+      end
+
+      r.post 'selection' do
+        response['Content-Type'] = 'application/json'
+        user_id = r.params['user_id'] || 'anonymous'
+        data = JSON.parse(r.body.read)
+        user = User.first(user_id: user_id)
+        first_selection = data['firstSelection']
       end
     
       # test Queue

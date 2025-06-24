@@ -183,6 +183,7 @@ export default {
     onMounted(() => {
       console.log('MainTask mounted');
       checkManipulationCheckStatus();
+      checkFirstSelection();
     });
 
     const checkManipulationCheckStatus = async () => {
@@ -207,6 +208,18 @@ export default {
         showPowerCheck.value = true;
       }
     };
+
+    const checkFirstSelection = () => {
+      const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+      if (user_id !== 'anonymous') {
+        const localData = JSON.parse(localStorage.getItem(user_id)) || {};
+        if (localData.firstSelection) {
+          console.log('User already has first selection, redirecting to followup');
+          router.push({ path: '/followup', query: route.query });
+          return;
+        }
+      }
+    }
 
     // Methods
     const closePowerCheck = async () => {
@@ -236,13 +249,17 @@ export default {
     }
 
     const confirmSelection = () => {
+      updateLocalData();
+      router.push({ path: '/followup', query: route.query });
+    }
+
+    const updateLocalData = () => {
       const user_id = store.state.sharedVariable.user_id
       const printerOrder = printers.value.map(p => p.id);
       let localData = JSON.parse(localStorage.getItem(user_id)) || {};
       localData['printerOrder'] = printerOrder.join(',');
       localData['firstSelection'] = selectedPrinter.value;
       localStorage.setItem(user_id, JSON.stringify(localData));
-      router.push({ path: '/persuasion', query: route.query });
     }
 
     const showPrinterDetail = (printer) => {
@@ -340,12 +357,6 @@ export default {
 }
 .printer-actions .el-button {
   width: 100%;
-}
-.printer-brand {
-  font-size: 14px;
-  color: #4B9B87;
-  font-weight: bold;
-  margin-bottom: 6px;
 }
 .printer-section {
   margin-bottom: 22px;

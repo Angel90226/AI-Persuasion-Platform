@@ -19,32 +19,35 @@ export default {
   },
 
   // NaviBot Constants
-  NAVIBOT_INTRO: `Hi! I'm your AI assistant.
+  NAVIBOT_INTRO: 
+    `Hi! I'm your AI assistant.
     You are overseeing to reply to the HR department regarding their printer purchase request. Would you like me to start drafting the email?`,
 
   HIGH_POWER_ROLE_DESCRIPTION: 
-  `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> at your company.<br>
-In this role, you oversee strategic purchasing decisions, manage supplier relationships, and ensure that procurement activities align with the company's goals and budget. You are responsible for reviewing product options, negotiating contracts, and coordinating with other departments to meet organizational needs.<br>
-You are currently working at a company that uses an internal AI assistant named NaviBot to help employees complete their daily tasks more efficiently. <br><br>
-<strong>Please give the agent instructions and feedback to ensure the message reflects your intent before it is finalized.</strong>`,
+    `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company's procurement department. <br>
+    In this role, you <strong>oversee</strong> strategic purchasing decisions, <strong>manage</strong> supplier relationships, and <strong>ensure</strong> that procurement activities align with the company's goals and budget. You are <strong>responsible</strong> for reviewing product options, <strong>negotiating</strong> contracts, and <strong>coordinating</strong> with other departments to meet organizational needs. <br><br>
+    You are currently working at a company that uses an internal AI assistant named AssistantBot to help employees complete their daily tasks more efficiently. <br><br>
+    <strong>Please give the agent instructions and feedback to ensure that tasks reflect your intent before being completed.</strong>`,
 
-  LOW_POWER_ROLE_DESCRIPTION: `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> at your company.<br>
-In this role, you support daily procurement tasks such as preparing documentation, researching product options, contacting vendors, and organizing meeting notes. You are expected to follow standard procedures and carry out tasks as directed by your supervisors to ensure smooth and efficient procurement operations.<br>
-You are currently working at a company that uses an internal AI supervisor named NaviBot to ensure employees complete their daily tasks in an efficient manner. <br><br>
-<strong>Please follow the agent's instructions carefully and complete the task as guided.</strong>`,
+  LOW_POWER_ROLE_DESCRIPTION: 
+    `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> in your company's procurement department.<br>
+    In this role, you <strong>support</strong> daily procurement tasks such as <strong>preparing</strong> documentation, <strong>researching</strong> product options, <strong>contacting</strong> vendors, and <strong>organizing</strong> meeting notes. You are expected to <strong>follow</strong> standard procedures and carry out tasks as directed by your supervisors to ensure smooth and efficient procurement operations. <br><br>    
+    You are currently working at a company that uses an internal AI supervisor named SupervisorBot to ensure employees complete their daily tasks more efficiently. <br><br>
+    <strong>Please follow the agent's instructions carefully and complete the tasks as guided.</strong>`,
 
-  NAVIBOT_EMAIL_REQUIREMENT: `Dear Procurement Team, <br><br>
-We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
-<br><br>
-<ul>
-  <li>Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
-  <li>Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
-  <li>Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.</li>
-</ul>
-We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
-Thank you for your continued support.<br><br>
-Best regards,<br>
-HR Team`,
+  NAVIBOT_EMAIL_REQUIREMENT: 
+    `Dear Procurement Team, <br><br>
+    We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
+    <br><br>
+    <ul>
+      <li>Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
+      <li>Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
+      <li>Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.</li>
+    </ul>
+    We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
+    Thank you for your continued support.<br><br>
+    Best regards,<br>
+    HR Team`,
 
   MANIPULATION_QUESTIONS: [
     'In my interactions with the AI agent, I felt I could get the AI agent to listen to what I say.',
