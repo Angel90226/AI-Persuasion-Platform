@@ -1,0 +1,117 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.8.7)
+      public_suffix (>= 2.0.2, < 7.0)
+    ast (2.4.3)
+    aws-eventstream (1.4.0)
+    aws-partitions (1.1110.0)
+    aws-sdk-core (3.225.0)
+      aws-eventstream (~> 1, >= 1.3.0)
+      aws-partitions (~> 1, >= 1.992.0)
+      aws-sigv4 (~> 1.9)
+      base64
+      jmespath (~> 1, >= 1.6.1)
+      logger
+    aws-sdk-sqs (1.96.0)
+      aws-sdk-core (~> 3, >= 3.225.0)
+      aws-sigv4 (~> 1.5)
+    aws-sigv4 (1.12.0)
+      aws-eventstream (~> 1, >= 1.0.2)
+    base64 (0.3.0)
+    bigdecimal (3.2.1)
+    coderay (1.1.3)
+    csv (3.3.5)
+    domain_name (0.6.20240107)
+    dotenv (3.1.8)
+    ffi (1.17.2-x86_64-linux-gnu)
+    ffi-compiler (1.3.2)
+      ffi (>= 1.15.5)
+      rake
+    figaro (1.2.0)
+      thor (>= 0.14.0, < 2)
+    foreman (0.88.1)
+    http (5.2.0)
+      addressable (~> 2.8)
+      base64 (~> 0.1)
+      http-cookie (~> 1.0)
+      http-form_data (~> 2.2)
+      llhttp-ffi (~> 0.5.0)
+    http-cookie (1.0.8)
+      domain_name (~> 0.5)
+    http-form_data (2.3.0)
+    jmespath (1.6.2)
+    json (2.12.2)
+    language_server-protocol (3.17.0.5)
+    lint_roller (1.1.0)
+    llhttp-ffi (0.5.1)
+      ffi-compiler (~> 1.0)
+      rake (~> 13.0)
+    logger (1.7.0)
+    method_source (1.1.0)
+    nio4r (2.7.4)
+    parallel (1.27.0)
+    parser (3.3.8.0)
+      ast (~> 2.4.1)
+      racc
+    pg (1.5.9)
+    prism (1.4.0)
+    pry (0.15.2)
+      coderay (~> 1.1)
+      method_source (~> 1.0)
+    public_suffix (6.0.2)
+    puma (6.6.0)
+      nio4r (~> 2.0)
+    racc (1.8.1)
+    rack (3.1.15)
+    rainbow (3.1.1)
+    rake (13.3.0)
+    regexp_parser (2.10.0)
+    roda (3.92.0)
+      rack
+    rubocop (1.75.8)
+      json (~> 2.3)
+      language_server-protocol (~> 3.17.0.2)
+      lint_roller (~> 1.1.0)
+      parallel (~> 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 2.9.3, < 3.0)
+      rubocop-ast (>= 1.44.0, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 2.4.0, < 4.0)
+    rubocop-ast (1.44.1)
+      parser (>= 3.3.7.2)
+      prism (~> 1.4)
+    ruby-progressbar (1.13.0)
+    sequel (5.93.0)
+      bigdecimal
+    sqlite3 (1.7.3-x86_64-linux)
+    thor (1.3.2)
+    tilt (2.6.0)
+    unicode-display_width (3.1.4)
+      unicode-emoji (~> 4.0, >= 4.0.4)
+    unicode-emoji (4.0.4)
+
+PLATFORMS
+  x86_64-linux
+
+DEPENDENCIES
+  aws-sdk-sqs
+  csv
+  dotenv
+  figaro (~> 1.2)
+  foreman (~> 0.0)
+  http
+  pg (~> 1.0)
+  pry
+  puma (~> 6.0)
+  rake (~> 13.0)
+  roda (~> 3.0)
+  rubocop
+  sequel (~> 5.0)
+  sqlite3 (~> 1.0)
+  tilt
+
+BUNDLED WITH
+   2.4.12
