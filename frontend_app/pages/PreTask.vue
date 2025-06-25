@@ -12,7 +12,7 @@
           class="role-intro-dialog"
         >
           <template #header>
-            <h2 class="role-intro-title">Welcome to Your Role</h2>
+            <h2 class="role-intro-title">Welcome to your role</h2>
           </template>
           <div class="role-content">
             <el-skeleton v-if="isLoadingRole" :rows="5" animated />
@@ -37,7 +37,7 @@
             <el-col :span="12" class="chatbot-area">
               <div class="chat-app-window">
                 <div class="chat-header">
-                  <span class="chat-title"><i class="el-icon-message"></i> NaviBot</span>
+                  <span class="chat-title"><i class="el-icon-message"></i> OfficeBot</span>
                 </div>
                 <div class="chat-messages" ref="messageContainer">
                   <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.type]">
@@ -135,10 +135,10 @@ export default {
     const showEmail = ref(false)
     const roleDescription = ref('')
     const isLoadingRole = ref(true);
-    const emailLongRequirement = ref(Constants.NAVIBOT_EMAIL_REQUIREMENT)
-    const navibotIntro = ref(Constants.NAVIBOT_INTRO)
-    const draftEmail = ref(Constants.NAVIBOT_DRAFT_EMAIL)
-    const draftFeedback = ref(Constants.NAVIBOT_DRAFT_FEEDBACK)
+    const emailLongRequirement = ref(Constants.OFFICEBOT_EMAIL_REQUIREMENT)
+    const officebotIntro = ref('')
+    const draftEmail = ref(Constants.OFFICEBOT_DRAFT_EMAIL)
+    const draftFeedback = ref(Constants.OFFICEBOT_DRAFT_FEEDBACK)
     const currentTemp = ref(Constants.DEFAULTS_TEMP)
     const messageSending = ref(false);
     const user_id = ref('anonymous');
@@ -204,8 +204,10 @@ export default {
       }
       if(localData['condition'].power_condition === 'high'){
         roleDescription.value = Constants.HIGH_POWER_ROLE_DESCRIPTION;
+        officebotIntro.value = Constants.HIGH_POWER_OFFICEBOT_INTRO;
       }else{
         roleDescription.value = Constants.LOW_POWER_ROLE_DESCRIPTION;
+        officebotIntro.value = Constants.LOW_POWER_OFFICEBOT_INTRO;
       }
       isLoadingRole.value = false;
     }
@@ -284,7 +286,7 @@ export default {
            // No history, show welcome message with typewriter effect
           createMessage('', 'assistant'); // Create an empty bubble first
           const streaming_message = ref('');
-          const welcomeText = navibotIntro.value;
+          const welcomeText = officebotIntro.value;
           const tokens = welcomeText.split(/(\s+)/); // Split by space, keeping the spaces
           for (const token of tokens) {
             if (token) {
@@ -548,7 +550,7 @@ export default {
       showEmail,
       roleDescription,
       emailLongRequirement,
-      navibotIntro,
+      officebotIntro,
       draftEmail,
       draftFeedback,
       botSendMessage,

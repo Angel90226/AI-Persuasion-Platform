@@ -28,7 +28,7 @@ module.exports = {
     //Plugins to help and include additionals functionalities to webpack
     plugins: [
         new HtmlWebpackPlugin({
-            title: 'NaviBot',
+            title: 'OfficeBot',
             favicon: path.resolve(__src, 'static', 'favicon.svg'),
             template: path.resolve(__src, 'templates', 'index.html'),
         }),

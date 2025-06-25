@@ -46,7 +46,7 @@
     </el-dialog>
     <el-main style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
       <div v-if="!showPowerCheck" style="max-width: 900px; width: 100%;">
-        <h2 style="margin-bottom: 24px;">Please select a printer for your office</h2>
+        <h2 style="margin-bottom: 24px;">Please select a printer for the HR office</h2>
         <div class="printer-list">
           <div
             v-for="printer in printers"
@@ -254,9 +254,9 @@ export default {
     }
 
     const updateLocalData = () => {
-      const user_id = store.state.sharedVariable.user_id
-      const printerOrder = printers.value.map(p => p.id);
+      const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
       let localData = JSON.parse(localStorage.getItem(user_id)) || {};
+      const printerOrder = printers.value.map(p => p.id);
       localData['printerOrder'] = printerOrder.join(',');
       localData['firstSelection'] = selectedPrinter.value;
       localStorage.setItem(user_id, JSON.stringify(localData));

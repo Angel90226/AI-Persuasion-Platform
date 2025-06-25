@@ -18,10 +18,14 @@ export default {
     low_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJsb3ciCn0="
   },
 
-  // NaviBot Constants
-  NAVIBOT_INTRO: 
+  // OFFICEBOT Constants
+  HIGH_POWER_OFFICEBOT_INTRO: 
     `Hi! I'm your AI assistant.
-    You are overseeing to reply to the HR department regarding their printer purchase request. Would you like me to start drafting the email?`,
+    You are first overseeing the reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
+
+  LOW_POWER_OFFICEBOT_INTRO: 
+    `Hello. I'm your AI supervisor. 
+    You are assigned to reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
 
   HIGH_POWER_ROLE_DESCRIPTION: 
     `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company's procurement department. <br>
@@ -35,7 +39,7 @@ export default {
     You are currently working at a company that uses an internal AI supervisor named SupervisorBot to ensure employees complete their daily tasks more efficiently. <br><br>
     <strong>Please follow the agent's instructions carefully and complete the tasks as guided.</strong>`,
 
-  NAVIBOT_EMAIL_REQUIREMENT: 
+  OFFICEBOT_EMAIL_REQUIREMENT: 
     `Dear Procurement Team, <br><br>
     We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
     <br><br>

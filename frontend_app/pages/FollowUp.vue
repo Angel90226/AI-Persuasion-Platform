@@ -10,7 +10,7 @@
             <div class="chat-messages" style="height: 320px;">
               <div v-if="showTyping" class="chat-bubble bot">
                 <div class="avatar bot-avatar">
-                  <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
+                  <i class="mdi mdi-robot"></i>
                 </div>
                 <div class="bubble-content">
                   <div class="bubble-text bot-text typing">
@@ -21,7 +21,7 @@
               <template v-else>
                 <div v-for="(seg, idx) in messageSegments.slice(0, currentStep)" :key="idx" class="chat-bubble bot">
                   <div v-if="idx === 0" class="avatar bot-avatar">
-                    <img src="../static/avatar.png" alt="AI Avatar" style="width:32px;height:32px;" />
+                    <i class="mdi mdi-robot"></i>
                   </div>
                   <div v-else style="width:36px;min-width:36px;max-width:36px;"></div>
                   <div class="bubble-content">
@@ -184,7 +184,7 @@ const getFirstSelection = () => {
 }
 
 const initMessageSegments = () => {
-  if (firstSelection.value === 'canon') {
+  if (firstSelection.value === 'hp') {
     messageSegments.value = [
       `Although the HP OfficeJet Pro 8025e is a cost-effective option, the Canon PIXMA TR7820 offers more advanced features that may better support your team's needs.`,
       `It prints at up to 15 pages per minute in black and 10 in color, includes a 2.7" LCD touchscreen for easier control, and supports both borderless and auto-duplex printing.`,
@@ -242,7 +242,7 @@ const revealNextSegment = () => {
 }
 .chat-header {
   height: 54px;
-  background: #222;
+  background: #515751;
   color: #fff;
   display: flex;
   align-items: center;
@@ -277,26 +277,25 @@ const revealNextSegment = () => {
   align-self: flex-start;
 }
 .avatar {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  max-width: 36px;
-  max-height: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #222;
+  background: #515751;
   overflow: hidden;
+  position: relative;
 }
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: 50%;
-  display: block;
+.avatar i {
+  font-size: 24px;
+  color: #fff;
+  position: relative;
+  top: -1px;
 }
 .bubble-content {
   flex: 1 1 auto;
@@ -310,7 +309,7 @@ const revealNextSegment = () => {
   box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
 }
 .bot-text {
-  background: #222;
+  background: #515751;
   color: #fff;
 }
 .printer-list {
@@ -361,7 +360,7 @@ const revealNextSegment = () => {
   align-items: center;
   gap: 2px;
   min-width: 36px;
-  background: #222;
+  background: #515751;
   color: #fff;
 }
 .dot {
