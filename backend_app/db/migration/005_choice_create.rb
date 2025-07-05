@@ -9,8 +9,8 @@ Sequel.migration do
       foreign_key :user_id, :users, null: false, unique: true
       String :first_choice, null: false
       DateTime :first_choice_time, null: false
-      String :final_choice, null: false
-      DateTime :final_choice_time, null: false
+      String :final_choice
+      DateTime :final_choice_time
       DateTime :created_at
       DateTime :updated_at
     end

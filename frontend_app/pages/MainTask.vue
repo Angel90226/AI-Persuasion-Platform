@@ -24,7 +24,7 @@
         </div>
       </div>
       <template #footer>
-        <el-button type="primary" :disabled="powerScores.some(v => !v)" @click="closePowerCheck">Continue</el-button>
+        <el-button type="primary" :disabled="powerScores.some(v => !v)" @click="saveManipulationCheck">Continue</el-button>
       </template>
     </el-dialog>
     <el-dialog
@@ -35,7 +35,7 @@
       width="480px"
     >
       <template #header>
-        <h2>Instructions</h2>
+        <h2 class="role-intro-title">Instructions</h2>
       </template>
       <div class="role-content">
         <p v-html="mainTaskInstruction"></p>
@@ -46,30 +46,39 @@
     </el-dialog>
     <el-main style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
       <div v-if="!showPowerCheck" style="max-width: 900px; width: 100%;">
-        <h2 style="margin-bottom: 24px;">Please select a printer for the HR office</h2>
+        <h2 style="margin-bottom: 24px; text-align: center;">Please select a printer for the HR office</h2>
         <div class="printer-list">
           <div
             v-for="printer in printers"
             :key="printer.id"
             :class="['printer-card', { selected: selectedPrinter === printer.id }]"
           >
+            <!-- Select button above image -->
+            <div class="card-top-button">
+              <el-button
+                type="primary"
+                :plain="selectedPrinter !== printer.id"
+                @click="selectPrinter(printer.id)"
+              >
+                {{ selectedPrinter === printer.id ? 'Selected' : 'Select' }}
+              </el-button>
+              <div class="purchase-divider"></div>
+              <div style="height: 16px;"></div>
+            </div>
             <img :src="printer.image" :alt="printer.name" class="printer-img" />
+            
             <div class="printer-info">
               <h3>{{ printer.name }}</h3>
               <div class="printer-price"><span class="dollar-sign">$</span>{{ printer.price }}</div>
-
+              
               <div class="printer-section">
-                <div class="section-title">Key Specs</div>
-                <ul class="printer-specs">
-                  <li v-for="spec in printer.specs" :key="spec">{{ spec }}</li>
-                </ul>
-              </div>
-
-              <div class="printer-section">
-                <div class="section-title">Full Specifications</div>
-                <ul class="printer-fullspecs">
-                  <li v-for="spec in printer.fullSpecs" :key="spec">{{ spec }}</li>
-                </ul>
+                <div class="section-title">Specifications</div>
+                <div class="printer-specs">
+                  <div v-for="spec in printer.specs" :key="spec" class="spec-row">
+                    <span class="spec-label">{{ spec.split(':')[0] }}</span>
+                    <span class="spec-value">{{ spec.slice(spec.indexOf(':') + 1).trim() }}</span>
+                  </div>
+                </div>
               </div>
 
               <div class="printer-section">
@@ -88,33 +97,23 @@
                   </div>
                 </div>
               </div>
-
-              <div class="printer-bottom">
-                <div class="printer-actions">
-                  <el-button
-                    type="primary"
-                    :plain="selectedPrinter !== printer.id"
-                    @click="selectPrinter(printer.id)"
-                  >
-                    {{ selectedPrinter === printer.id ? 'Selected' : 'Select' }}
-                  </el-button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
-        <div style="text-align: center; margin-top: 32px;">
-          <el-button
-            type="success"
-            size="large"
-            :disabled="!selectedPrinter"
-            @click="confirmSelection"
-          >
-            Confirm Selection
-          </el-button>
-        </div>
       </div>
     </el-main>
+    
+    <!-- Fixed bottom button -->
+    <div v-if="!showPowerCheck" class="fixed-bottom-button">
+      <el-button
+        type="success"
+        size="large"
+        :disabled="!selectedPrinter"
+        @click="submitFirstChoice"
+      >
+        Make Initial Selection
+      </el-button>
+    </div>
     <!-- Printer Detail Dialog -->
     <el-dialog
       v-model="showDetailDialog"
@@ -127,7 +126,7 @@
         <div style="font-size: 15px; color: #4B9B87; font-weight: bold; text-align: center; margin-bottom: 8px;">{{ detailPrinter.brand }}</div>
         <div style="font-size: 18px; color: #222; font-weight: bold; text-align: center; margin-bottom: 12px;">${{ detailPrinter.price }}</div>
         <ul style="font-size: 15px; color: #444; margin-bottom: 16px;">
-          <li v-for="spec in detailPrinter.fullSpecs" :key="spec">{{ spec }}</li>
+          <li v-for="spec in detailPrinter.specs" :key="spec">{{ spec }}</li>
         </ul>
         <div style="margin-bottom: 16px;">
           <b>Features:</b>
@@ -177,22 +176,33 @@ export default {
     const showDetailDialog = ref(false)
     const detailPrinter = ref(null)
     const showInstructionDialog = ref(false)
-    const mainTaskInstruction = ref(`Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>
-<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`)
+    const mainTaskInstruction = ref(Constants.MAIN_TASK_INSTRUCTION)
 
     onMounted(() => {
       console.log('MainTask mounted');
-      checkManipulationCheckStatus();
-      checkFirstSelection();
+      checkStatus();
     });
 
-    const checkManipulationCheckStatus = async () => {
+    const checkUserId = () => {
       const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
       if (user_id === 'anonymous') {
         console.log("User ID not found.");
         router.push({ path: '/missing' });
-        return;
+        return false;
       }
+      return user_id;
+    };
+
+    const checkPreTaskCompletion = (user_id) => {
+      const localData = JSON.parse(localStorage.getItem(user_id)) || {};
+      if (!localData.PreTaskCompleted) {
+        router.push({ path: '/', query: route.query });
+        return false;
+      }
+      return true;
+    };
+
+    const checkManipulationStatus = async (user_id) => {
       try {
         const api_url = `/manipulation-check/status?user_id=${user_id}`;
         const { data } = await axios.get(api_url);
@@ -203,26 +213,37 @@ export default {
           showPowerCheck.value = true;
         }
       } catch (error) {
-        console.error('Failed to check manipulation check status:', error);
-        // Fallback to showing the check if API fails
+        console.error('Failed to check status:', error);
         showPowerCheck.value = true;
       }
     };
 
-    const checkFirstSelection = () => {
-      const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
-      if (user_id !== 'anonymous') {
-        const localData = JSON.parse(localStorage.getItem(user_id)) || {};
-        if (localData.firstSelection) {
-          console.log('User already has first selection, redirecting to followup');
-          router.push({ path: '/followup', query: route.query });
-          return;
-        }
+    const checkFirstSelection = (user_id) => {
+      const localData = JSON.parse(localStorage.getItem(user_id)) || {};
+      if (localData.firstSelection) {
+        console.log('User already has first selection, redirecting to followup');
+        router.push({ path: '/followup', query: route.query });
+        return false;
       }
-    }
+      return true;
+    };
 
-    // Methods
-    const closePowerCheck = async () => {
+    const checkStatus = async () => {
+      //check user id
+      const user_id = checkUserId();
+      if (!user_id) return;
+      
+      //check if pre-task is completed
+      if (!checkPreTaskCompletion(user_id)) return;
+      
+      //check if user already has first selection
+      if (!checkFirstSelection(user_id)) return;
+      
+      //check manipulation check status
+      await checkManipulationStatus(user_id);
+    };
+
+    const saveManipulationCheck = async () => {
       try {
         const user_id = store.state.sharedVariable.user_id
         const api_url = `/manipulation-check?user_id=${user_id}`
@@ -248,7 +269,14 @@ export default {
       selectedPrinter.value = id
     }
 
-    const confirmSelection = () => {
+    const submitFirstChoice = async () => {
+      const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+      const api_url = `/submit-first-choice?user_id=${user_id}`;
+      const { data } = await axios.post(api_url, {
+        firstSelection: selectedPrinter.value,
+        firstSelectionTime: new Date().toISOString()
+      })
+      console.log('Submit First Choice:', data)
       updateLocalData();
       router.push({ path: '/followup', query: route.query });
     }
@@ -290,10 +318,11 @@ export default {
       showInstructionDialog,
       mainTaskInstruction,
       printers,
-      closePowerCheck,
+      saveManipulationCheck,
       selectPrinter,
-      confirmSelection,
-      showPrinterDetail
+      submitFirstChoice,
+      showPrinterDetail,
+      checkStatus
     }
   }
 }
@@ -310,6 +339,7 @@ export default {
   justify-content: center;
   flex-wrap: wrap;
   align-items: stretch;
+  padding-bottom: 80px;
 }
 .printer-card {
   background: #fff;
@@ -341,13 +371,45 @@ export default {
   flex: 1;
   width: 100%;
 }
-.printer-bottom {
-  margin-top: auto;
+.card-top-button {
+  margin-bottom: 16px;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+  text-align: center;
+}
+.card-top-button .el-button {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  font-size: 16px;
+  background: #ffffff;
+  color: #333333;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.card-top-button .el-button:hover {
+  background: #f8f8f8;
+  border-color: #d0d0d0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+.card-top-button .el-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.card-top-button .el-button.is-selected,
+.card-top-button .el-button:not(.is-plain) {
+  background: #4B9B87;
+  color: #ffffff;
+  border-color: #4B9B87;
+  box-shadow: 0 2px 8px rgba(75, 155, 135, 0.3);
+}
+.card-top-button .el-button.is-selected:hover,
+.card-top-button .el-button:not(.is-plain):hover {
+  background: #3d8a76;
+  border-color: #3d8a76;
+  box-shadow: 0 4px 12px rgba(75, 155, 135, 0.4);
 }
 .printer-price {
   font-size: 22px;
@@ -368,8 +430,28 @@ export default {
   margin-bottom: 8px;
   letter-spacing: 0.5px;
 }
-.printer-specs,
-.printer-fullspecs,
+.printer-specs {
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.spec-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.spec-label {
+  font-weight: bold;
+  margin-right: 8px;
+  min-width: 120px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.spec-value {
+  flex: 1;
+}
 .printer-features {
   font-size: 15px;
   color: #444;
@@ -430,7 +512,7 @@ export default {
 .role-content {
   font-size: 16px;
   line-height: 1.6;
-  margin: 20px 0;
+  margin: 10px 0;
   color: #222;
 }
 .dollar-sign {
@@ -438,5 +520,39 @@ export default {
   color: #888;
   vertical-align: super;
   margin-right: 2px;
+}
+
+.fixed-bottom-button {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  border-top: 1px solid #e0e0e0;
+}
+
+.fixed-bottom-button .el-button {
+  min-width: 200px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.role-intro-title {
+  text-align: center;
+  color: #515751;
+  padding: 10px 0;
+  margin-top: 10px;
+}
+.purchase-divider {
+  width: 100%;
+  height: 1.5px;
+  background: #e0e0e0;
+  margin: 8px 0 0 0;
+  border-radius: 1px;
 }
 </style>

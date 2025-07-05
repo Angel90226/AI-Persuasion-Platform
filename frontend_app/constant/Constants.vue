@@ -9,23 +9,23 @@ export default {
   URL_CONDITION_PARAMS: 'c',
   TIME_GAP:10,
   MISSION_TIME: 600,
-  MISSION_EXPIRE_TIME: 3600,
+  MISSION_EXPIRE_TIME: 900,
 
-  CONDITION_BASE64: {
-    high_high: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJoaWdoIiwKICAgICJwcmVzZW5jZV9jb25kaXRpb24iOiAiaGlnaCIKfQ==",
-    high_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJoaWdoIiwKICAgICJwcmVzZW5jZV9jb25kaXRpb24iOiAibG93Igp9",
-    low_high: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJoaWdoIgp9",
-    low_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJsb3ciCn0="
-  },
+  // CONDITION_BASE64: {
+  //   high_high: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJoaWdoIiwKICAgICJwcmVzZW5jZV9jb25kaXRpb24iOiAiaGlnaCIKfQ==",
+  //   high_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJoaWdoIiwKICAgICJwcmVzZW5jZV9jb25kaXRpb24iOiAibG93Igp9",
+  //   low_high: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJoaWdoIgp9",
+  //   low_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJsb3ciCn0="
+  // },
 
   // OFFICEBOT Constants
-  HIGH_POWER_OFFICEBOT_INTRO: 
-    `Hi! I'm your AI assistant.
-    You are first overseeing the reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
+  // HIGH_POWER_OFFICEBOT_INTRO: 
+  //   `Hi! I'm your AI assistant.
+  //   You are first overseeing the reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
 
-  LOW_POWER_OFFICEBOT_INTRO: 
-    `Hello. I'm your AI supervisor. 
-    You are assigned to reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
+  // LOW_POWER_OFFICEBOT_INTRO: 
+  //   `Hello. I'm your AI supervisor. 
+  //   You are assigned to reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
 
   HIGH_POWER_ROLE_DESCRIPTION: 
     `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company's procurement department. <br>
@@ -44,8 +44,8 @@ export default {
     We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
     <br><br>
     <ul>
-      <li>Print Speed: Minimum of 20 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
-      <li>Paper Capacity: An input tray that holds at least 200 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
+      <li>Print Speed: Minimum of 15 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
+      <li>Paper Capacity: An input tray that holds at least 100 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
       <li>Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.</li>
     </ul>
     We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
@@ -68,7 +68,7 @@ export default {
     'Agree',
     'Strongly Agree'
   ],
-
+  MAIN_TASK_INSTRUCTION: `Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>\n<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`,
   PRINTERS: [
     {
       id: 'canon',
@@ -79,23 +79,14 @@ export default {
       specs: [
         'All-in-One: Print, Copy, Scan',
         'Print Speed: 15 ppm (black), 10 ppm (color)',
-        '2.7" LCD Touchscreen',
-        'Auto-Duplex, Auto Document Feeder',
-        'Wireless & USB',
-        '100-sheet paper capacity',
-        'Color: White'
-      ],
-      fullSpecs: [
-        'Model: PIXMA TR7820',
+        'Display: 2.7" LCD Touchscreen',
+        'Connectivity: USB, Wireless',
+        'Paper Capacity: 200 sheets',
+        'ADF: Auto-Duplex, Auto Document Feeder (35 sheets)',
         'Dimensions: 15.9 x 14.2 x 8.2 inches',
         'Weight: 16 lbs',
         'Max Print Size: 8.5" x 11"',
         'Print Resolution: Up to 4800 x 1200 dpi',
-        'Connectivity: USB, Wireless',
-        'Paper Capacity: 100 sheets (cassette), 100 sheets (rear tray)',
-        'ADF: 35 sheets',
-        'Display: 2.7" LCD Touchscreen',
-        'Compatible OS: Windows, Mac, Mobile',
         'Warranty: 1 year'
       ],
       features: [
@@ -118,23 +109,14 @@ export default {
       specs: [
         'All-in-One: Print, Copy, Scan, Fax',
         'Print Speed: 20 ppm (black), 10 ppm (color)',
-        '2.7" Color Touchscreen',
-        'Auto-Duplex, Auto Document Feeder',
-        'Wireless, Ethernet, USB',
-        '225-sheet input tray',
-        'Color: Gray'
-      ],
-      fullSpecs: [
-        'Model: OfficeJet Pro 8025e',
+        'Display: 2.7" Color Touchscreen',
+        'Connectivity: USB, Wireless, Ethernet',
+        'Paper Capacity: 225 sheets',
+        'ADF: Auto-Duplex, Auto Document Feeder (35 sheets)',
         'Dimensions: 18.1 x 20.1 x 9.2 inches',
         'Weight: 18 lbs',
         'Max Print Size: 8.5" x 14"',
-        'Print Resolution: Up to 4800 x 1200 dpi',
-        'Connectivity: USB, Wireless, Ethernet',
-        'Paper Capacity: 225 sheets',
-        'ADF: 35 sheets',
-        'Display: 2.7" Color Touchscreen',
-        'Compatible OS: Windows, Mac, Mobile',
+        'Print Resolution: Up to 4800 x 1200 dpi',        
         'Warranty: 1 year'
       ],
       features: [

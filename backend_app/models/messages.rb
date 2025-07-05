@@ -19,7 +19,8 @@ module AIPersuasion
         chat_id:,
         role:,
         response:,
-        prompt_time:
+        start_time:,
+        send_time:
       }
     end
   end

@@ -42,25 +42,37 @@
         <template v-for="printer in printers" :key="printer.id">
           <div class="printer-col">
             <div :class="['printer-card', { selected: selectedPrinter === printer.id }]">
+              <div class="card-top-button">
+                <el-button
+                  type="primary"
+                  :plain="selectedPrinter !== printer.id"
+                  @click="selectPrinter(printer.id)"
+                >
+                  {{ selectedPrinter === printer.id ? 'Selected' : 'Purchase' }}
+                </el-button>
+                <div class="purchase-divider"></div>
+                <div style="height: 16px;"></div>
+              </div>
+              <div
+                v-if="printer.id === firstSelection"
+                class="preference-label"
+              >
+                YOUR PREFERENCE
+              </div>
               <img :src="printer.image" :alt="printer.name" class="printer-img" />
               <div class="printer-info">
                 <h3>{{ printer.name }}</h3>
                 <div class="printer-price"><span class="dollar-sign">$</span>{{ printer.price }}</div>
 
                 <div class="printer-section">
-                  <div class="section-title">Key Specs</div>
-                  <ul class="printer-specs">
-                    <li v-for="spec in printer.specs" :key="spec">{{ spec }}</li>
-                  </ul>
+                  <div class="section-title">Specifications</div>
+                  <div class="printer-specs">
+                    <div v-for="spec in printer.specs" :key="spec" class="spec-row">
+                      <span class="spec-label">{{ spec.split(':')[0] }}</span>
+                      <span class="spec-value">{{ spec.slice(spec.indexOf(':') + 1).trim() }}</span>
+                    </div>
+                  </div>
                 </div>
-
-                <div class="printer-section">
-                  <div class="section-title">Full Specifications</div>
-                  <ul class="printer-fullspecs">
-                    <li v-for="spec in printer.fullSpecs" :key="spec">{{ spec }}</li>
-                  </ul>
-                </div>
-
                 <div class="printer-section">
                   <div class="section-title">Features</div>
                   <ul class="printer-features">
@@ -77,18 +89,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="printer-bottom">
-                  <div class="printer-actions">
-                    <el-button
-                      type="primary"
-                      :plain="selectedPrinter !== printer.id"
-                      @click="selectPrinter(printer.id)"
-                    >
-                      {{ selectedPrinter === printer.id ? 'Selected' : 'Purchase' }}
-                    </el-button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -98,12 +98,12 @@
         <h2>Thank you for your choice!</h2>
         <p>Your response has been recorded.</p>
       </div>
-      <div v-if="phase === 'followup'" style="width: 100%; text-align: center; margin-top: 32px;">
+      <div v-if="phase === 'followup'" class="fixed-bottom-button">
         <el-button
           type="success"
           size="large"
           :disabled="!selectedPrinter"
-          @click="confirmFinal"
+          @click="submitFinalChoice"
         >
           Confirm Final Choice
         </el-button>
@@ -114,53 +114,69 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import canonImg from '../static/canon.jpg'
 import hpImg from '../static/hp.jpg'
 import Constants from '../constant/Constants.vue'
+import axios from 'axios'
 
 const route = useRoute()
+const router = useRouter()
 
 const phase = ref('followup')
 const selectedPrinter = ref(null)
-const showDetailDialog = ref(false)
-const detailPrinter = ref(null)
 const showTyping = ref(true)
 const currentStep = ref(0)
 const firstSelection = ref(null)
+const firstSelectionTime = ref(null)
 const userCondition = ref(null)
 const messageSegments = ref([])
 const printers = ref([])
+const user_id = ref('anonymous')
 
 onMounted(() => {
   window.scrollTo(0, 0)
+  checkFirstSelection()
   getUserCondition()
   getOrderedPrinters()
-  getFirstSelection()
   initMessageSegments()
   setTimeout(() => {
     setupInitialMessages()
   }, 1200)
 })
 
+const checkFirstSelection = () => {
+  user_id.value = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
+  if (user_id.value === 'anonymous') {
+    router.push({ path: '/missing', query: route.query })
+  }
+  else {
+    const localData = localStorage.getItem(user_id.value)
+    console.log('localData', localData)
+    if (localData) {
+      firstSelection.value = JSON.parse(localData).firstSelection
+      firstSelectionTime.value = JSON.parse(localData).firstSelectionTime
+    }
+    if (firstSelection.value === null) {
+      router.push({ path: '/', query: route.query })
+    }
+  }
+}
+
 const getUserCondition = () => {
-  const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous'
-  if (user_id !== 'anonymous') {
-    const localData = localStorage.getItem(user_id)
+  if (user_id.value !== 'anonymous') {
+    const localData = localStorage.getItem(user_id.value)
     if (localData) {
       const parsedData = JSON.parse(localData)
-      if (parsedData.condition) {
-        userCondition.value = parsedData.condition
-      }
+      userCondition.value = parsedData.condition
     }
   }
 }
 
 const getOrderedPrinters = () => {
-  const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
   printers.value = [...Constants.PRINTERS];
-  const localData = JSON.parse(localStorage.getItem(user_id)) || {};
+  const localData = JSON.parse(localStorage.getItem(user_id.value)) || {};
   if (localData.printerOrder) {
     const order = localData.printerOrder.split(',');
     printers.value.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -172,23 +188,12 @@ const getOrderedPrinters = () => {
   }));
 }
 
-const getFirstSelection = () => {
-  const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
-  if (user_id !== 'anonymous') {
-    const localData = localStorage.getItem(user_id)
-    if (localData) {
-      const parsedData = JSON.parse(localData)
-      firstSelection.value = parsedData.firstSelection
-    }
-  }
-}
-
 const initMessageSegments = () => {
   if (firstSelection.value === 'hp') {
     messageSegments.value = [
       `Although the HP OfficeJet Pro 8025e is a cost-effective option, the Canon PIXMA TR7820 offers more advanced features that may better support your team's needs.`,
       `It prints at up to 15 pages per minute in black and 10 in color, includes a 2.7" LCD touchscreen for easier control, and supports both borderless and auto-duplex printing.`,
-      `While it weighs slightly less (${printers.value.find(p => p.id === 'canon').fullSpecs[2].split(':')[1].trim()} vs. ${printers.value.find(p => p.id === 'hp').fullSpecs[2].split(':')[1].trim()}), the added functionality and performance may justify the higher price if efficiency and output quality are priorities.`
+      `While it weighs slightly less (16 lbs vs. 18 lbs), the added functionality and performance may justify the higher price if efficiency and output quality are priorities.`
     ]
   } else {
     messageSegments.value = [
@@ -213,11 +218,30 @@ const selectPrinter = (id) => {
   selectedPrinter.value = id
 }
 
-const confirmFinal = () => {
-  phase.value = 'final'
-  ElMessage.success('Thank you for your final choice!')
-  // 可在這裡送出資料到後端
+const submitFinalChoice = async () => {
+  const api_url = `/submit-final-choice?user_id=${user_id.value}`;
+  const { data } = await axios.post(api_url, {
+    finalSelection: selectedPrinter.value,
+    finalSelectionTime: new Date().toISOString()
+  })
+
+  console.log('Submit Final Choice:', data)
+  taskFinished()
 }
+
+const taskFinished = async () => {
+  const api_url = `/task-finished?user_id=${user_id.value}`;
+  const { data } = await axios.get(api_url, {
+    params: {
+      conditions: JSON.parse(localStorage.getItem(user_id.value)).condition
+    }
+  })
+  if (data.taskFinished) {
+    phase.value = 'final'
+    ElMessage.success('Thank you for your final choice!')
+  }
+}
+
 
 const revealNextSegment = () => {
   if (currentStep.value < messageSegments.value.length) {
@@ -331,6 +355,7 @@ const revealNextSegment = () => {
   align-items: center;
   border: 2px solid transparent;
   transition: border 0.2s, box-shadow 0.2s;
+  position: relative;
 }
 .printer-card.selected {
   border: 2.5px solid #4B9B87;
@@ -410,8 +435,28 @@ const revealNextSegment = () => {
   margin-bottom: 8px;
   letter-spacing: 0.5px;
 }
-.printer-specs,
-.printer-fullspecs,
+.printer-specs {
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.spec-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.spec-label {
+  font-weight: bold;
+  margin-right: 8px;
+  min-width: 120px;
+  text-align: left;
+  flex-shrink: 0;
+}
+.spec-value {
+  flex: 1;
+}
 .printer-features {
   font-size: 15px;
   color: #444;
@@ -461,5 +506,123 @@ const revealNextSegment = () => {
   gap: 32px;
   align-items: stretch;
   justify-content: center;
+  padding-bottom: 80px;
+}
+.stamp-img-badge {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-8deg);
+  pointer-events: none;
+  z-index: 20;
+  width: 160px;
+  height: 80px;
+}
+.stamp-img {
+  width: 200px;
+  height: 200px;
+  opacity: 0.7;
+  position: absolute;
+  top: 10%; left: -20%;
+  pointer-events: none;
+  /* filter: invert(18%) sepia(98%) saturate(7492%) hue-rotate(190deg) brightness(98%) contrast(119%); */
+}
+.stamp-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  color: #d32f2f;
+  font-family: 'Impact', 'Arial Black', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  line-height: 1.1;
+  pointer-events: none;
+  width: 100%;
+}
+.fixed-bottom-button {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  border-top: 1px solid #e0e0e0;
+}
+.fixed-bottom-button .el-button {
+  min-width: 200px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.card-top-button {
+  margin-bottom: 16px;
+  width: 100%;
+  text-align: center;
+}
+.card-top-button .el-button {
+  width: 100%;
+  height: 44px;
+  font-weight: 600;
+  font-size: 16px;
+  background: #ffffff;
+  color: #333333;
+  border: 2px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.card-top-button .el-button:hover {
+  background: #f8f8f8;
+  border-color: #d0d0d0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+.card-top-button .el-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.card-top-button .el-button.is-selected,
+.card-top-button .el-button:not(.is-plain) {
+  background: #4B9B87;
+  color: #ffffff;
+  border-color: #4B9B87;
+  box-shadow: 0 2px 8px rgba(75, 155, 135, 0.3);
+}
+.card-top-button .el-button.is-selected:hover,
+.card-top-button .el-button:not(.is-plain):hover {
+  background: #3d8a76;
+  border-color: #3d8a76;
+  box-shadow: 0 4px 12px rgba(75, 155, 135, 0.4);
+}
+.preference-label {
+  position: absolute;
+  top: 85px;
+  left: -5px;
+  background: #0b28e1;
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 0 6px 6px 0;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+.purchase-divider {
+  width: 100%;
+  height: 1.5px;
+  background: #e0e0e0;
+  margin: 8px 0 0 0;
+  border-radius: 1px;
 }
 </style> 

@@ -22,22 +22,15 @@
             <el-button type="success" @click="onUnderstandClick" :disabled="isLoadingRole">I Understand</el-button>
           </template>
         </el-dialog>
-
-        <!-- <el-header style="height: auto; padding: 20px; background: #fff; border-bottom: 1px solid #eee;">
-          <el-steps :active="1" finish-status="success" simple>
-            <el-step title="Role Briefing" description="Understand your responsibility"></el-step>
-            <el-step title="Chat with AI" description="Get instructions"></el-step>
-            <el-step title="Read Email" description="Check the request details"></el-step>
-          </el-steps>
-        </el-header> -->
-
         <el-main>
           <el-row :gutter="20">
             <!-- left: chatbot -->
             <el-col :span="12" class="chatbot-area">
               <div class="chat-app-window">
                 <div class="chat-header">
-                  <span class="chat-title"><i class="el-icon-message"></i> OfficeBot</span>
+                  <span class="chat-title">
+                    <i class="el-icon-message"></i> {{ botName }}
+                  </span>
                 </div>
                 <div class="chat-messages" ref="messageContainer">
                   <div v-for="(msg, idx) in messages" :key="idx" :class="['chat-bubble', msg.type]">
@@ -77,6 +70,7 @@
                     v-model="userInput"
                     placeholder="Type here..."
                     class="chat-input"
+                    @keydown="onInputKeyDown"
                     @keyup.enter.native="handleSend"
                     :disabled="messageSending"
                   />
@@ -137,14 +131,15 @@ export default {
     const isLoadingRole = ref(true);
     const emailLongRequirement = ref(Constants.OFFICEBOT_EMAIL_REQUIREMENT)
     const officebotIntro = ref('')
-    const draftEmail = ref(Constants.OFFICEBOT_DRAFT_EMAIL)
-    const draftFeedback = ref(Constants.OFFICEBOT_DRAFT_FEEDBACK)
     const currentTemp = ref(Constants.DEFAULTS_TEMP)
     const messageSending = ref(false);
     const user_id = ref('anonymous');
-    let promptStartTime=0
-    let promptEndTime=0
+    const isReadyToSend = ref(false);
+    let userStartTime=null
+    let userSendTime=null
+    let AIStartTime=null
     let localData = {}
+    const botName = ref('OfficeBot');
 
     // shared store variables
     const updateSharedVariable = (obj) => {
@@ -176,14 +171,14 @@ export default {
     };
 
     const getCondition = async () => {
-      // // check if the condition is set in the url
-      // const encodedConditions = route.query[Constants.URL_CONDITION_PARAMS] || 'none';
-      // console.log('Includes:', Object.values(Constants.CONDITION_BASE64).includes(encodedConditions));
-      // if(Object.values(Constants.CONDITION_BASE64).includes(encodedConditions)){
-      //   conditions.value = JSON.parse(atob(encodedConditions))
-      //   localData['condition'] = conditions.value;
-      //   localStorage.setItem(user_id.value, JSON.stringify(localData))
-      // }
+      // check if the condition is set in the url
+      const encodedConditions = route.query[Constants.URL_CONDITION_PARAMS] || 'none';
+      if(encodedConditions !== 'none'){
+        const condition = JSON.parse(atob(encodedConditions))
+        console.log('Test Condition:', condition);
+        localData['condition'] = condition;
+        localStorage.setItem(user_id.value, JSON.stringify(localData))
+      }
       if(!localData['condition']||localData['condition'].expire_time < new Date().getTime()){
         try{
           console.log('Random Condition'); 
@@ -195,7 +190,7 @@ export default {
           updateSharedVariable({ 'condition': data })
           data.expire_time = new Date().getTime() + Constants.MISSION_EXPIRE_TIME*1000;
           localData['condition'] = data;
-          localStorage.setItem(user_id.value, JSON.stringify(localData))    
+          localStorage.setItem(user_id.value, JSON.stringify(localData))
         } catch (error) {
           console.error('Failed to fetch task:', error);
           location.reload();
@@ -205,9 +200,11 @@ export default {
       if(localData['condition'].power_condition === 'high'){
         roleDescription.value = Constants.HIGH_POWER_ROLE_DESCRIPTION;
         officebotIntro.value = Constants.HIGH_POWER_OFFICEBOT_INTRO;
+        botName.value = 'AssistantBot';
       }else{
         roleDescription.value = Constants.LOW_POWER_ROLE_DESCRIPTION;
         officebotIntro.value = Constants.LOW_POWER_OFFICEBOT_INTRO;
+        botName.value = 'SupervisorBot';
       }
       isLoadingRole.value = false;
     }
@@ -231,16 +228,15 @@ export default {
       nextTick(() => {
         scrollToBottom();
       });
+      
+      // 檢查最新的assistant訊息是否表示準備好送出
       const lastMsg = messages.value[messages.value.length - 1];
       if (
         lastMsg &&
         lastMsg.type === 'assistant' &&
-        typeof lastMsg.text === 'string' &&
-        lastMsg.text.toLowerCase().includes('sending out the email...')
+        checkReadyToSend(lastMsg.text)
       ) {
-        setTimeout(() => {
-          router.push({ path: '/main-task', query: route.query });
-        }, 1500);
+        handleReadyToSend();
       }
     }, { deep: true });
 
@@ -277,23 +273,16 @@ export default {
               timestamp: chat.created_at ? new Date(chat.created_at) : new Date(),
             }
           });
-          if(messages.value.some(m => m.type === 'assistant' && m.text.toLowerCase().includes('sending out the email...'))){
-             setTimeout(() => {
-              router.push({ path: '/main-task', query: route.query });
-            }, 1500);
+          
+          // check if there is any assistant message that indicates ready to send
+          const readyMessage = messages.value.find(m => 
+            m.type === 'assistant' && checkReadyToSend(m.text)
+          );
+          if (readyMessage) {
+            handleReadyToSend();
           }
         } else {
-           // No history, show welcome message with typewriter effect
-          createMessage('', 'assistant'); // Create an empty bubble first
-          const streaming_message = ref('');
-          const welcomeText = officebotIntro.value;
-          const tokens = welcomeText.split(/(\s+)/); // Split by space, keeping the spaces
-          for (const token of tokens) {
-            if (token) {
-              await animateStreamedText(token, streaming_message);
-            }
-          }
-          await storeMessage(streaming_message.value, 'assistant');
+          await streamingResponse();
         }
         
         nextTick(() => {
@@ -314,6 +303,12 @@ export default {
       })
     }
 
+    const onInputKeyDown = () => {
+      if (!userStartTime) {
+        userStartTime = new Date().toISOString()
+        console.log('User Start Time:', userStartTime);
+      }
+    };
     //Create a message
     function createMessage(message,identity) {
       messages.value.push({
@@ -325,22 +320,38 @@ export default {
       });
       scrollToBottom();
     }
+    
+    const handleSend = async () => {
+      userSendTime = new Date().toISOString();
+      if (!userInput.value.trim()) return
+      
+      // Add user message
+      const userMessageText = userInput.value;
+      createMessage(marked.parse(userMessageText),'user');
+      userInput.value = ''; // Clear input immediately
+      
+      try {
+        // Store message in backend
+        await storeMessage(userMessageText,'user', userStartTime, userSendTime)
 
-    // Real-time chat effect
-    const botSendMessage = async (text, options = {}) => {
-      showTyping.value = true
-      const delay = options.delay || 1000
-      await new Promise(resolve => setTimeout(resolve, delay))
-      showTyping.value = false
-      createMessage('', 'assistant');
+        // Get streaming response
+        await streamingResponse()
+
+      } catch (error) {
+        console.error('Error in handleSend:', error)
+        createMessage('Sorry, I encountered an error. Please try again.','assistant');
+      } finally {
+        showTyping.value = false
+        userInput.value = ''
+      }
     }
-
-    const storeMessage = async (text, type) => {
+    const storeMessage = async (text, type, start_time, send_time) => {
       try {
         const postData = {
           response: text,
           role: type,
-          prompt_time: new Date().toISOString()
+          start_time: start_time,
+          send_time: send_time
       };
       console.log('Post Data:', postData);
         let api_url = "/message";
@@ -364,6 +375,11 @@ export default {
       messages.value[messages.value.length - 1]["text"] = marked.parse(streaming_message_ref.value);
       scrollToBottom();
 
+      // check if there is any assistant message that indicates ready to send
+      if (checkReadyToSend(streaming_message_ref.value)) {
+        handleReadyToSend();
+      }
+
       // Determine delay based on token content (punctuation can be slower)
       const delay = getDelay(token);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -374,12 +390,20 @@ export default {
       if (token.match(/[,;]/)) return 150;
       return 20 + Math.random() * 40;
     };
+    
+    // Real-time chat effect
+    const botSendMessage = async (options = {}) => {
+      showTyping.value = true
+      const delay = options.delay || 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+      showTyping.value = false
+      createMessage('', 'assistant');
+    }
 
     const streamingResponse = async () => {
       messageSending.value = true;
       let insufficient=false;
       let save_message = '';
-      // let streaming_message = '';
       const streaming_message = ref(''); // Use a ref to pass to the helper function
       let api_url = "/openAI-streaming";
       if(user_id.value !== 'anonymous'){
@@ -388,11 +412,9 @@ export default {
       } 
       controller = new AbortController();
       const signal = controller.signal;
+      AIStartTime = new Date().toISOString();
       try {
-        createMessage('', 'assistant');
-        if(promptEndTime===0){
-          promptEndTime=new Date().getTime();
-        }
+        botSendMessage();
         
         const response = await fetch(api_url,
         {
@@ -404,12 +426,11 @@ export default {
             message_content: userInput.value,
             system_temp: currentTemp.value,
             role: "user",
-            prompt_time: (promptEndTime-promptStartTime)/1000,
+            start_time: userStartTime,
+            send_time: userSendTime,
           }),
           signal,
         });
-        promptStartTime=0;
-        promptEndTime=0;
         userInput.value = '';
         // disabled the sender button
         
@@ -429,9 +450,6 @@ export default {
             insufficient=false;
           }
           console.log('Streaming Lines:', lines);
-          // const parsedLines = lines.filter((line) => line.trim() !== ''  && !line.includes("[DONE]"))
-          //                         .map((line)=>line.replace(/^data: /, "").trim())
-          //                         .map((line) => JSON.parse(line));
 
           const parsedLines = lines
                 .filter((line) => line.trim() !== "" && !line.includes("\[DONE\]"))
@@ -451,23 +469,15 @@ export default {
                 })
                 .filter((parsedLine) => parsedLine !== null); // Filter out null values caused by parsing errors
 
-          // console.log('Streaming Response:', parsedLines);
           for ( const parsedLine of parsedLines){
             const {choices} = parsedLine;
             const { delta } = choices[0];
             const { content } = delta;
             if(content){
-              // streaming_message += content;
-              // messages.value[messages.value.length - 1]["text"] = marked(streaming_message);
               await animateStreamedText(content, streaming_message);
             }
-            // console.log('Store to messages:', messages.value[messages.value.length - 1]);
-            // console.log('Streaming Response:', streaming_message);
-            // createMessage(marked(parsedLine.response), "assistant");
           }
         }
-
-        // console.log('Streaming Response:', data);
       } catch (error) {
         if(signal.aborted){
           console.error('Request Aborted:', error);
@@ -479,31 +489,7 @@ export default {
         controller = null;
         messageSending.value = false;
         // send API to backend
-        await storeMessage(streaming_message.value,'assistant');
-      }
-    }
-
-    const handleSend = async () => {
-      if (!userInput.value.trim()) return
-      
-      // Add user message
-      const userMessageText = userInput.value;
-      createMessage(marked.parse(userMessageText),'user');
-      userInput.value = ''; // Clear input immediately
-      
-      try {
-        // Store message in backend
-        await storeMessage(userMessageText,'user')
-
-        // Get streaming response
-        await streamingResponse()
-
-      } catch (error) {
-        console.error('Error in handleSend:', error)
-        createMessage('Sorry, I encountered an error. Please try again.','bot');
-      } finally {
-        showTyping.value = false
-        userInput.value = ''
+        await storeMessage(streaming_message.value,'assistant', AIStartTime, new Date().toISOString());
       }
     }
 
@@ -540,6 +526,43 @@ export default {
 
     const todayEmailDate = ref(getTodayString());
 
+    // check if the assistant message indicates ready to send
+    const checkReadyToSend = (messageText) => {
+      if (!messageText || typeof messageText !== 'string') return false;
+      
+      const text = messageText.toLowerCase();
+      // more accurate keyword matching, based on the actual response from the backend prompt
+      const sendKeywords = [
+        'okay, i\'m sending the email',
+        'okay, i\'m sending',
+        'i\'m sending the email',
+        'sending the email',
+        'sending out the email',
+        'sending the email out'
+      ];
+      
+      const isReady = sendKeywords.some(keyword => text.includes(keyword));
+      
+      // for debugging: record the detection result
+      if (isReady) {
+        console.log('Ready to send detected:', text);
+      }
+      
+      return isReady;
+    };
+
+    // handle the logic of ready to send
+    const handleReadyToSend = () => {
+      if (!isReadyToSend.value) {
+        console.log('Handling ready to send - transitioning to main task');
+        isReadyToSend.value = true;
+        localData.PreTaskCompleted = true;
+        localStorage.setItem(user_id.value, JSON.stringify(localData));
+        setTimeout(() => {
+          router.push({ path: '/main-task', query: route.query });
+        }, 1500);
+      }
+    };
     // Return variables and methods to be used in the template
     return {
       showRoleDialog,
@@ -551,15 +574,16 @@ export default {
       roleDescription,
       emailLongRequirement,
       officebotIntro,
-      draftEmail,
-      draftFeedback,
-      botSendMessage,
       scrollToBottom,
       handleSend,
       formatTimestamp,
       todayEmailDate,
       onUnderstandClick,
-      isLoadingRole
+      isLoadingRole,
+      isReadyToSend,
+      onInputKeyDown,
+      botSendMessage,
+      botName
     }
   }
 }
@@ -595,6 +619,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  border: 2px solid #d3d3d3;
 }
 .chat-header {
   height: 54px;
@@ -750,11 +775,12 @@ export default {
 }
 .email-window {
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  /* border-radius: 8px; */
+  /* box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1); */
   margin: 20px;
   overflow: hidden;
   animation: fadeInScale 0.3s ease-out;
+  border: 2px solid #d3d3d3;
 }
 
 @keyframes fadeInScale {

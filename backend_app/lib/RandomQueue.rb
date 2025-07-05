@@ -53,18 +53,20 @@ module AIPersuasion
       @queue.delete_messages(
         entries: [
           {
-            id: task.message_id,
-            receipt_handle: task.receipt_handle
+            id: task['message_id'],
+            receipt_handle: task['receipt_handle']
           }
         ]
       )
+      puts('finish_task:', task)
+      puts('queue_size:', queue_size)
     rescue Aws::SQS::Errors::ReceiptHandleIsInvalid
       raise ArgumentError, "Input receipt \"#{task}\" is not a valid receipt"
     rescue StandardError => e
       raise RuntimeError, 'Could not send the delete request to SQS', e
     end
 
-    def fill_task(num_of_task)
+    def fill_task(num_of_task = 400)
       num_of_task.times do |i|
         # Distribute all four conditions evenly
         condition_index = i % 4

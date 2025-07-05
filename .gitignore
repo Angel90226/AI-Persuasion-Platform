@@ -6,7 +6,7 @@ node_modules/
 
 # local env files
 **/.env*.local
-Gemfile.lock
+# Gemfile.lock
 /config/application.yml
 homework_sample
 output

@@ -10,11 +10,10 @@ Sequel.migration do
       foreign_key :chat_id, :chats # Links message to a specific chat
       String :role, null: false
       String :response, null: false
-      String :prompt_time
+      DateTime :start_time # when the user or agent started to type the message
+      DateTime :send_time # when the user or agent sent the message
       DateTime :created_at
       DateTime :updated_at
-
-      # unique %i[course_id name]
     end
   end
 end

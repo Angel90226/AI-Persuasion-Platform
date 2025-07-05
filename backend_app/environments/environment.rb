@@ -20,7 +20,12 @@ module AIPersuasion
     def self.config = Figaro.env
     db_url = ENV['DATABASE_URL']
     puts "Connecting to database at #{db_url}"
-    @db = Sequel.connect(db_url, logger: Logger.new($stderr))
+    if environment == :development
+      # @db = Sequel.connect(db_url, logger: Logger.new($stderr))
+      @db = Sequel.connect(db_url)
+    else
+      @db = Sequel.connect(db_url)
+    end
     def self.db = @db # rubocop:disable Style/TrivialAccessors
   end
 end
