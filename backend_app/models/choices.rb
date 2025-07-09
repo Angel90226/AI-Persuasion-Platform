@@ -2,8 +2,8 @@
 
 require 'sequel'
 module AIPersuasion
-  # class to store the first and final choices
-  class Choice < Sequel::Model
+  # class to store the first and final Selections
+  class Selection < Sequel::Model
     # validation for the model
     plugin :validation_helpers
     plugin :timestamps, update_on_create: true
@@ -14,10 +14,10 @@ module AIPersuasion
       {
         id:,
         user_id:,
-        first_choice:,
-        first_choice_time:,
-        final_choice:,
-        final_choice_time:
+        first_selection:,
+        first_selection_time:,
+        final_selection:,
+        final_selection_time:
       }
     end
   end

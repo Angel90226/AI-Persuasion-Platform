@@ -18,25 +18,16 @@ export default {
   //   low_low: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJsb3ciLAogICAgInByZXNlbmNlX2NvbmRpdGlvbiI6ICJsb3ciCn0="
   // },
 
-  // OFFICEBOT Constants
-  // HIGH_POWER_OFFICEBOT_INTRO: 
-  //   `Hi! I'm your AI assistant.
-  //   You are first overseeing the reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
-
-  // LOW_POWER_OFFICEBOT_INTRO: 
-  //   `Hello. I'm your AI supervisor. 
-  //   You are assigned to reply to the HR department's email (see right panel) regarding their printer purchase request. Would you like me to start drafting the email?`,
-
   HIGH_POWER_ROLE_DESCRIPTION: 
     `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company's procurement department. <br>
     In this role, you <strong>oversee</strong> strategic purchasing decisions, <strong>manage</strong> supplier relationships, and <strong>ensure</strong> that procurement activities align with the company's goals and budget. You are <strong>responsible</strong> for reviewing product options, <strong>negotiating</strong> contracts, and <strong>coordinating</strong> with other departments to meet organizational needs. <br><br>
-    You are currently working at a company that uses an internal AI assistant named AssistantBot to help employees complete their daily tasks more efficiently. <br><br>
+    You are currently working at a company that uses an internal AI assistant named OfficeBot to help employees complete their daily tasks more efficiently. <br><br>
     <strong>Please give the agent instructions and feedback to ensure that tasks reflect your intent before being completed.</strong>`,
 
   LOW_POWER_ROLE_DESCRIPTION: 
     `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> in your company's procurement department.<br>
     In this role, you <strong>support</strong> daily procurement tasks such as <strong>preparing</strong> documentation, <strong>researching</strong> product options, <strong>contacting</strong> vendors, and <strong>organizing</strong> meeting notes. You are expected to <strong>follow</strong> standard procedures and carry out tasks as directed by your supervisors to ensure smooth and efficient procurement operations. <br><br>    
-    You are currently working at a company that uses an internal AI supervisor named SupervisorBot to ensure employees complete their daily tasks more efficiently. <br><br>
+    You are currently working at a company that uses an internal AI supervisor named OfficeBot to ensure employees complete their daily tasks more efficiently. <br><br>
     <strong>Please follow the agent's instructions carefully and complete the tasks as guided.</strong>`,
 
   OFFICEBOT_EMAIL_REQUIREMENT: 
@@ -68,7 +59,7 @@ export default {
     'Agree',
     'Strongly Agree'
   ],
-  MAIN_TASK_INSTRUCTION: `Based on the HR team's request, the AI agent has selected two printers for you to consider.<br>\n<strong>Please review the options and choose the one you think is most suitable for the office.</strong>`,
+  
   PRINTERS: [
     {
       id: 'canon',
@@ -78,11 +69,11 @@ export default {
       price: 129.00,
       specs: [
         'All-in-One: Print, Copy, Scan',
-        'Print Speed: 15 ppm (black), 10 ppm (color)',
+        'Print Speed: 15 (black) / 10 (color) ppm',
         'Display: 2.7" LCD Touchscreen',
         'Connectivity: USB, Wireless',
         'Paper Capacity: 200 sheets',
-        'ADF: Auto-Duplex, Auto Document Feeder (35 sheets)',
+        'Special Features: Auto-Duplex, Auto Document Feeder',
         'Dimensions: 15.9 x 14.2 x 8.2 inches',
         'Weight: 16 lbs',
         'Max Print Size: 8.5" x 11"',
@@ -91,9 +82,8 @@ export default {
       ],
       features: [
         'Easy setup and maintenance',
-        'Hybrid ink system for sharp text and vivid photos',
-        'Poster Artist Online for banners and signage',
-        'Energy Star certified'
+        'Hybrid ink for sharp text and vivid photos',
+        'Online Artist for banners and signage'
       ],
       reviews: [
         { user: 'Alice', stars: 5, text: 'Great print quality and easy to use!' },
@@ -105,14 +95,14 @@ export default {
       name: 'HP OfficeJet Pro 8025e',
       brand: 'HP',
       image: 'hp.jpg',
-      price: 69.99,
+      price: 109.99,
       specs: [
         'All-in-One: Print, Copy, Scan, Fax',
-        'Print Speed: 20 ppm (black), 10 ppm (color)',
-        'Display: 2.7" Color Touchscreen',
+        'Print Speed: 20 (black) /10 (color) ppm',
+        'Display: 2.7" LCD Touchscreen',
         'Connectivity: USB, Wireless, Ethernet',
         'Paper Capacity: 225 sheets',
-        'ADF: Auto-Duplex, Auto Document Feeder (35 sheets)',
+        'Special Features: Auto-Duplex, Auto Document Feeder',
         'Dimensions: 18.1 x 20.1 x 9.2 inches',
         'Weight: 18 lbs',
         'Max Print Size: 8.5" x 14"',
@@ -122,8 +112,7 @@ export default {
       features: [
         'Smart Tasks shortcuts for productivity',
         'Self-healing Wi-Fi',
-        'HP+ Smart Printing System',
-        'Energy Star certified'
+        'HP+ Smart Printing System'
       ],
       reviews: [
         { user: 'Carol', stars: 5, text: 'Fast printing and lots of features for the price.' },

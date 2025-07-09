@@ -29,7 +29,7 @@
               <div class="chat-app-window">
                 <div class="chat-header">
                   <span class="chat-title">
-                    <i class="el-icon-message"></i> {{ botName }}
+                    <i class="el-icon-message"></i> OfficeBot
                   </span>
                 </div>
                 <div class="chat-messages" ref="messageContainer">
@@ -139,7 +139,6 @@ export default {
     let userSendTime=null
     let AIStartTime=null
     let localData = {}
-    const botName = ref('OfficeBot');
 
     // shared store variables
     const updateSharedVariable = (obj) => {
@@ -200,11 +199,9 @@ export default {
       if(localData['condition'].power_condition === 'high'){
         roleDescription.value = Constants.HIGH_POWER_ROLE_DESCRIPTION;
         officebotIntro.value = Constants.HIGH_POWER_OFFICEBOT_INTRO;
-        botName.value = 'AssistantBot';
       }else{
         roleDescription.value = Constants.LOW_POWER_ROLE_DESCRIPTION;
         officebotIntro.value = Constants.LOW_POWER_OFFICEBOT_INTRO;
-        botName.value = 'SupervisorBot';
       }
       isLoadingRole.value = false;
     }
@@ -583,7 +580,6 @@ export default {
       isReadyToSend,
       onInputKeyDown,
       botSendMessage,
-      botName
     }
   }
 }

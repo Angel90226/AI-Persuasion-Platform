@@ -19,12 +19,10 @@ module AIPersuasion
     end
 
     def streaming
-      puts 'streaming'
       Enumerator.new do |out|
         Net::HTTP.start(@uri.hostname, @uri.port, use_ssl: true) do |http|
           http.request @requests do |response|
             response.read_body do |chunk|
-              print 'chunk:', chunk
               out << chunk
             end
           end
@@ -34,19 +32,6 @@ module AIPersuasion
 
     # rubocop:disable Metrics/MethodLength
     def build_request_body(system_content, history_messages, temperature)
-      puts 'test:', JSON.dump(
-        {
-          'model' => 'gpt-4o',
-          'stream' => true,
-          'temperature' => temperature || 0.6,
-          'messages' =>
-            history_messages.unshift({
-                                       'role' => 'system',
-                                       'content' => system_content
-                                     })
-
-        }
-      )
       JSON.dump(
         {
           'model' => 'gpt-4o',

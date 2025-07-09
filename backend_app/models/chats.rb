@@ -10,7 +10,7 @@ module AIPersuasion
     many_to_one :user, class: :'AIPersuasion::User'
     many_to_one :message, class: :'AIPersuasion::Message'
     one_to_one :manipulation_check, class: :'AIPersuasion::ManipulationCheck'
-    one_to_one :choice, class: :'AIPersuasion::Choice'
+    one_to_one :selection, class: :'AIPersuasion::Selection'
     many_to_one :errorlog, class: :'AIPersuasion::Errorlog'
 
     def attributes

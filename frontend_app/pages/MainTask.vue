@@ -2,11 +2,13 @@
   <div id="main-task">
     <el-dialog
       v-model="showPowerCheck"
-      title="Quick Question"
       :close-on-click-modal="false"
       :show-close="false"
       width="800px"
     >
+      <template #header>
+        <div class="dialog-title">Quick Feedback on OfficeBot</div>
+      </template>
       <div style="margin-bottom: 16px; font-size: 17px; font-weight: bold; color: #222;">Please indicate how much you agree or disagree with each statement:</div>
       <div style="display: grid; grid-template-columns: 320px 1fr; align-items: end; margin-bottom: 18px;">
         <div></div>
@@ -38,7 +40,7 @@
         <h2 class="role-intro-title">Instructions</h2>
       </template>
       <div class="role-content">
-        <p v-html="mainTaskInstruction"></p>
+        <p>Based on the HR team's request, the AI agent has selected two printers for you to consider.<br><br><strong>Please review the options and choose the one you think is most suitable for the office.</strong></p>
       </div>
       <template #footer>
         <el-button type="success" @click="showInstructionDialog = false">I Understand</el-button>
@@ -46,7 +48,12 @@
     </el-dialog>
     <el-main style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
       <div v-if="!showPowerCheck" style="max-width: 900px; width: 100%;">
-        <h2 style="margin-bottom: 24px; text-align: center;">Please select a printer for the HR office</h2>
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h2 style="margin-bottom: 8px;">Please select a printer for the HR office</h2>
+          <div style="color: #666; font-size: 1.1em;">
+            Select your preferred printer, then click the "Confirm Initial Selection" button at the bottom of the page.
+          </div>
+        </div>
         <div class="printer-list">
           <div
             v-for="printer in printers"
@@ -109,45 +116,11 @@
         type="success"
         size="large"
         :disabled="!selectedPrinter"
-        @click="submitFirstChoice"
+        @click="submitFirstSelection"
       >
-        Make Initial Selection
+        Confirm Initial Selection
       </el-button>
     </div>
-    <!-- Printer Detail Dialog -->
-    <el-dialog
-      v-model="showDetailDialog"
-      :title="detailPrinter?.name"
-      width="520px"
-      :close-on-click-modal="true"
-    >
-      <div v-if="detailPrinter">
-        <img :src="detailPrinter.image" :alt="detailPrinter.name" style="width: 260px; display: block; margin: 0 auto 18px auto; background: #f8f8f8; border-radius: 10px;" />
-        <div style="font-size: 15px; color: #4B9B87; font-weight: bold; text-align: center; margin-bottom: 8px;">{{ detailPrinter.brand }}</div>
-        <div style="font-size: 18px; color: #222; font-weight: bold; text-align: center; margin-bottom: 12px;">${{ detailPrinter.price }}</div>
-        <ul style="font-size: 15px; color: #444; margin-bottom: 16px;">
-          <li v-for="spec in detailPrinter.specs" :key="spec">{{ spec }}</li>
-        </ul>
-        <div style="margin-bottom: 16px;">
-          <b>Features:</b>
-          <ul style="margin: 6px 0 0 18px; color: #555;">
-            <li v-for="feature in detailPrinter.features" :key="feature">{{ feature }}</li>
-          </ul>
-        </div>
-        <div style="margin-bottom: 8px;">
-          <b>Customer Reviews:</b>
-          <div style="margin-top: 4px;">
-            <div v-for="review in detailPrinter.reviews" :key="review.text" style="margin-bottom: 10px; background: #f5f5f5; border-radius: 8px; padding: 10px 14px;">
-              <span style="color: #FFD700;">★</span> <b>{{ review.stars }}/5</b> — <i>{{ review.user }}</i><br>
-              <span>{{ review.text }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <el-button @click="showDetailDialog = false">Close</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -173,8 +146,6 @@ export default {
     const manipulationQuestions = ref(Constants.MANIPULATION_QUESTIONS)
     const likertLabels = ref(Constants.LIKERT_LABELS)
     const selectedPrinter = ref(null)
-    const showDetailDialog = ref(false)
-    const detailPrinter = ref(null)
     const showInstructionDialog = ref(false)
     const mainTaskInstruction = ref(Constants.MAIN_TASK_INSTRUCTION)
 
@@ -246,6 +217,7 @@ export default {
     const saveManipulationCheck = async () => {
       try {
         const user_id = store.state.sharedVariable.user_id
+        console.log('Saving manipulation check for user:', user_id)
         const api_url = `/manipulation-check?user_id=${user_id}`
         
         await axios.post(api_url, {
@@ -269,14 +241,14 @@ export default {
       selectedPrinter.value = id
     }
 
-    const submitFirstChoice = async () => {
+    const submitFirstSelection = async () => {
       const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
-      const api_url = `/submit-first-choice?user_id=${user_id}`;
+      const api_url = `/submit-first-selection?user_id=${user_id}`;
       const { data } = await axios.post(api_url, {
         firstSelection: selectedPrinter.value,
         firstSelectionTime: new Date().toISOString()
       })
-      console.log('Submit First Choice:', data)
+      console.log('Submit First Selection:', data)
       updateLocalData();
       router.push({ path: '/followup', query: route.query });
     }
@@ -288,11 +260,6 @@ export default {
       localData['printerOrder'] = printerOrder.join(',');
       localData['firstSelection'] = selectedPrinter.value;
       localStorage.setItem(user_id, JSON.stringify(localData));
-    }
-
-    const showPrinterDetail = (printer) => {
-      detailPrinter.value = printer
-      showDetailDialog.value = true
     }
 
     function shuffle(array) {
@@ -313,15 +280,12 @@ export default {
       manipulationQuestions,
       likertLabels,
       selectedPrinter,
-      showDetailDialog,
-      detailPrinter,
       showInstructionDialog,
       mainTaskInstruction,
       printers,
       saveManipulationCheck,
       selectPrinter,
-      submitFirstChoice,
-      showPrinterDetail,
+      submitFirstSelection,
       checkStatus
     }
   }
@@ -346,7 +310,7 @@ export default {
   border-radius: 16px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
   padding: 24px 20px 20px 20px;
-  width: 340px;
+  width: 360px;
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -513,7 +477,7 @@ export default {
   font-size: 16px;
   line-height: 1.6;
   margin: 10px 0;
-  color: #222;
+  color: #515751;
 }
 .dollar-sign {
   font-size: 16px;
@@ -545,7 +509,6 @@ export default {
 .role-intro-title {
   text-align: center;
   color: #515751;
-  padding: 10px 0;
   margin-top: 10px;
 }
 .purchase-divider {
@@ -554,5 +517,12 @@ export default {
   background: #e0e0e0;
   margin: 8px 0 0 0;
   border-radius: 1px;
+}
+.dialog-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  color: #515751;
+  padding: 10px 0;
 }
 </style>

@@ -174,17 +174,17 @@ module AIPersuasion
         end
       end
 
-      r.post 'submit-first-choice' do
+      r.post 'submit-first-selection' do
         response['Content-Type'] = 'application/json'
         user_id = r.params['user_id'] || 'anonymous'
         data = JSON.parse(r.body.read)
         user = User.first(user_id: user_id)
-        choice = Choice.create(user_id: user.id, first_choice: data['firstSelection'], first_choice_time: data['firstSelectionTime'])
+        selection= Selection.create(user_id: user.id, first_selection: data['firstSelection'], first_selection_time: data['firstSelectionTime'])
         response.status = 201
-        choice.attributes.to_json
+        selection.attributes.to_json
       end
 
-      r.post 'submit-final-choice' do
+      r.post 'submit-final-selection' do
         user_id = r.params['user_id'] || 'anonymous'
         data = JSON.parse(r.body.read)
         user = User.first(user_id: user_id)
@@ -194,17 +194,17 @@ module AIPersuasion
           return { success: false, message: 'User not found' }.to_json
         end
 
-        choice = Choice.first(user_id: user.id)
+        selection = Selection.first(user_id: user.id)
 
-        if choice.nil?
+        if selection.nil?
           response.status = 404
-          return { success: false, message: 'No choice to update' }.to_json
+          return { success: false, message: 'No selection to update' }.to_json
         end
 
-        choice.update(final_choice: data['finalSelection'], final_choice_time: Time.now)
+        selection.update(final_selection: data['finalSelection'], final_selection_time: Time.now)
         print 'data:', data
         RandomQueue.new(Api.config).finish_task(data['condition']) if data['condition']
-        return choice.attributes.to_json
+        return selection.attributes.to_json
       end
 
       r.get 'task-finished' do
@@ -216,13 +216,13 @@ module AIPersuasion
           return { taskFinished: false, message: 'User not found' }.to_json
         end
 
-        choice = Choice.first(user_id: user.id)
-        if choice.nil?
+        selection= Selection.first(user_id: user.id)
+        if selection.nil?
           response.status = 404
-          return { taskFinished: false, message: 'Choice not found' }.to_json
+          return { taskFinished: false, message: 'selection not found' }.to_json
         end
 
-        if choice.final_choice.nil?
+        if selection.final_selection.nil?
           response.status = 200
           { taskFinished: false }.to_json
         else

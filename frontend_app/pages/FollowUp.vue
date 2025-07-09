@@ -1,11 +1,36 @@
 <template>
   <div id="followup-task">
+    <el-dialog
+      v-model="showRedirectDialog"
+      width="400px"
+      :show-close="false"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <div style="text-align:center;">
+        <div style="font-size:20px; font-weight:bold; margin-bottom:12px;">
+          Your response has been recorded.
+        </div>
+        <div style="color:#666; margin-bottom:18px;">
+          Complete the short post-survey to finish!
+        </div>
+        <el-button type="primary" size="large" round @click="goToSurvey">
+          Continue
+        </el-button>
+      </div>
+    </el-dialog>
     <el-main style="padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="margin-bottom: 8px;">Please Make Your Final Purchase Decision</h2>
+        <div style="color: #666; font-size: 1.1em;">
+          Please review OfficeBot's feedback, select your final purchase decision, and click the "Confirm Final Selection" button at the bottom of the page.
+        </div>
+      </div>
       <div v-if="phase === 'followup'" class="followup-flex-row">
         <div style="width: 100%;">
           <div v-if="isHighSocialPresence" class="chat-app-window">
             <div class="chat-header">
-              <span class="chat-title"><i class="el-icon-message"></i> NaviBot</span>
+              <span class="chat-title"><i class="el-icon-message"></i> OfficeBot</span>
             </div>
             <div class="chat-messages" style="height: 320px;">
               <div v-if="showTyping" class="chat-bubble bot">
@@ -24,8 +49,9 @@
                     <i class="mdi mdi-robot"></i>
                   </div>
                   <div v-else style="width:36px;min-width:36px;max-width:36px;"></div>
-                  <div class="bubble-content">
+                  <div class="bubble-content-with-timestamp bot">
                     <div class="bubble-text bot-text">{{ seg }}</div>
+                    <span class="bubble-timestamp-outside">{{ segmentTimestamps[idx] }}</span>
                   </div>
                 </div>
               </template>
@@ -57,7 +83,7 @@
                 v-if="printer.id === firstSelection"
                 class="preference-label"
               >
-                YOUR PREFERENCE
+                YOUR INITIAL SELECTION
               </div>
               <img :src="printer.image" :alt="printer.name" class="printer-img" />
               <div class="printer-info">
@@ -95,7 +121,7 @@
         </template>
       </div>
       <div v-else-if="phase === 'final'" style="max-width: 900px; width: 100%; text-align: center;">
-        <h2>Thank you for your choice!</h2>
+        <h2>Thank you for your selection!</h2>
         <p>Your response has been recorded.</p>
       </div>
       <div v-if="phase === 'followup'" class="fixed-bottom-button">
@@ -103,9 +129,9 @@
           type="success"
           size="large"
           :disabled="!selectedPrinter"
-          @click="submitFinalChoice"
+          @click="submitFinalSelection"
         >
-          Confirm Final Choice
+          Confirm Final Selection
         </el-button>
       </div>
     </el-main>
@@ -113,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import canonImg from '../static/canon.jpg'
@@ -132,8 +158,10 @@ const firstSelection = ref(null)
 const firstSelectionTime = ref(null)
 const userCondition = ref(null)
 const messageSegments = ref([])
+const segmentTimestamps = ref([])
 const printers = ref([])
 const user_id = ref('anonymous')
+const showRedirectDialog = ref(false)
 
 onMounted(() => {
   window.scrollTo(0, 0)
@@ -153,17 +181,19 @@ const checkFirstSelection = () => {
   }
   else {
     const localData = localStorage.getItem(user_id.value)
-    console.log('localData', localData)
     if (localData) {
-      firstSelection.value = JSON.parse(localData).firstSelection
-      firstSelectionTime.value = JSON.parse(localData).firstSelectionTime
+      const parsed = JSON.parse(localData)
+      if (parsed.firstSelection === 'hp' || parsed.firstSelection === 'canon') {
+        firstSelection.value = parsed.firstSelection
+        firstSelectionTime.value = parsed.firstSelectionTime
+      }
     }
-    if (firstSelection.value === null) {
+    if (firstSelection.value !== 'hp' && firstSelection.value !== 'canon') {
       router.push({ path: '/', query: route.query })
     }
   }
 }
-
+  
 const getUserCondition = () => {
   if (user_id.value !== 'anonymous') {
     const localData = localStorage.getItem(user_id.value)
@@ -189,19 +219,39 @@ const getOrderedPrinters = () => {
 }
 
 const initMessageSegments = () => {
+  // 取得 high presence 狀態
+  const isHigh = userCondition.value && userCondition.value.presence_condition === 'high';
+  // 依 user 選擇決定品牌
+  let selectedPrinter = '';
+
+  // 準備主訊息陣列
+  let segments = [];
   if (firstSelection.value === 'hp') {
-    messageSegments.value = [
+    selectedPrinter = 'HP';
+    segments = [
       `Although the HP OfficeJet Pro 8025e is a cost-effective option, the Canon PIXMA TR7820 offers more advanced features that may better support your team's needs.`,
       `It prints at up to 15 pages per minute in black and 10 in color, includes a 2.7" LCD touchscreen for easier control, and supports both borderless and auto-duplex printing.`,
       `While it weighs slightly less (16 lbs vs. 18 lbs), the added functionality and performance may justify the higher price if efficiency and output quality are priorities.`
-    ]
+    ];
   } else {
-    messageSegments.value = [
+    selectedPrinter = 'Canon';
+    segments = [
       `While the Canon PIXMA TR7820 provides a range of all-in-one functions, the HP OfficeJet Pro 8025e may be a more practical and budget-friendly choice.`,
       `It offers a larger paper tray (225 sheets vs. 100 sheets), faster black-and-white print speeds (20 ppm vs. 15 ppm), and costs nearly half as much ($${printers.value.find(p => p.id === 'hp').price} vs. $${printers.value.find(p => p.id === 'canon').price}).`,
       `If your team values high-volume printing and smart productivity features like Smart Tasks and self-healing Wi-Fi, the HP could be the smarter pick.`
-    ]
+    ];
   }
+
+  // 如果是 high presence，最前面插入一句
+  if (isHigh && selectedPrinter) {
+    segments.unshift(`I see you have selected the ${selectedPrinter} printer.`);
+  }
+  console.log('isHigh:', isHigh)
+  console.log('firstSelection:', firstSelection.value)
+  console.log('selectedPrinter:', selectedPrinter)
+  console.log('segments:', segments)
+  messageSegments.value = segments;
+  segmentTimestamps.value = [];
 }
 
 const isHighSocialPresence = computed(() => {
@@ -209,23 +259,48 @@ const isHighSocialPresence = computed(() => {
 })
 
 const setupInitialMessages = () => {
-  showTyping.value = false
-  currentStep.value = 1
-  revealNextSegment()
+  showTyping.value = false;
+  // 先顯示第一則訊息並記錄時間
+  currentStep.value = 1;
+  segmentTimestamps.value = [
+    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  ];
+  revealNextSegment();
+};
+
+const revealNextSegment = () => {
+  if (currentStep.value < messageSegments.value.length) {
+    segmentTimestamps.value.push(
+      new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    );
+    setTimeout(() => {
+      currentStep.value++;
+      revealNextSegment();
+    }, 1400);
+  }
+}
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  });
 }
 
 const selectPrinter = (id) => {
   selectedPrinter.value = id
 }
 
-const submitFinalChoice = async () => {
-  const api_url = `/submit-final-choice?user_id=${user_id.value}`;
+const submitFinalSelection = async () => {
+  const api_url = `/submit-final-selection?user_id=${user_id.value}`;
   const { data } = await axios.post(api_url, {
     finalSelection: selectedPrinter.value,
     finalSelectionTime: new Date().toISOString()
   })
 
-  console.log('Submit Final Choice:', data)
+  console.log('Submit Final Selection:', data)
   taskFinished()
 }
 
@@ -237,26 +312,24 @@ const taskFinished = async () => {
     }
   })
   if (data.taskFinished) {
-    phase.value = 'final'
-    ElMessage.success('Thank you for your final choice!')
+    showRedirectDialog.value = true
   }
 }
 
-
-const revealNextSegment = () => {
-  if (currentStep.value < messageSegments.value.length) {
-    setTimeout(() => {
-      currentStep.value++
-      revealNextSegment()
-    }, 1400)
-  }
+const goToSurvey = () => {
+  showRedirectDialog.value = false
+  router.push({ path: '/survey', query: route.query })
 }
+
+watch(currentStep, () => {
+  scrollToBottom()
+})
 </script>
 
 <style scoped>
 .chat-app-window {
   width: 100%;
-  height: 380px;
+  height: 45%;
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10);
@@ -348,7 +421,7 @@ const revealNextSegment = () => {
   border-radius: 16px;
   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
   padding: 24px 20px 20px 20px;
-  width: 340px;
+  width: 360px;
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -625,4 +698,47 @@ const revealNextSegment = () => {
   margin: 8px 0 0 0;
   border-radius: 1px;
 }
+.bubble-content-with-timestamp {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 6px;
+  position: relative;
+}
+.bubble-content-with-timestamp.bot {
+  flex-direction: row;
+}
+.bubble-content-with-timestamp.user {
+  flex-direction: row-reverse;
+}
+.bubble-timestamp-outside {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 2px;
+  min-width: 60px;
+  text-align: right;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+.bubble-content-with-timestamp.user .bubble-timestamp-outside {
+  text-align: left;
+}
+:deep(.el-message.top-center-message) {
+  left: 50% !important;
+  top: 40px !important;
+  transform: translateX(-50%) !important;
+  right: auto !important;
+  min-width: 320px;
+  font-size: 18px;
+  font-weight: bold;
+  background: #e6f7ff !important;
+  color: #096dd9 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+/* :deep(.redirect-dialog) {
+  top: 40px !important;
+  margin: 0 auto !important;
+  border-radius: 12px;
+  text-align: center;
+} */
 </style> 
