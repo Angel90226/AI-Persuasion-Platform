@@ -60,6 +60,9 @@
           <div v-else class="sticky-note">
             <div class="sticky-note-content">
               <div class="sticky-note-text">
+                <div style="font-weight:bold; margin-bottom: 8px;">
+                  {{ Constants.OFFICEBOT_STICKY_NOTE_PREFIX }}
+                </div>
                 {{ messageSegments.join(' ') }}
               </div>
             </div>
@@ -229,16 +232,18 @@ const initMessageSegments = () => {
   if (firstSelection.value === 'hp') {
     selectedPrinter = 'HP';
     segments = [
-      `Although the HP OfficeJet Pro 8025e is a cost-effective option, the Canon PIXMA TR7820 offers more advanced features that may better support your team's needs.`,
-      `It prints at up to 15 pages per minute in black and 10 in color, includes a 2.7" LCD touchscreen for easier control, and supports both borderless and auto-duplex printing.`,
-      `While it weighs slightly less (16 lbs vs. 18 lbs), the added functionality and performance may justify the higher price if efficiency and output quality are priorities.`
+      'The Canon PIXMA TR7820 offers more advanced features and greater flexibility. ',
+      'The Canon PIXMA TR7820 prints in both black-and-white and color at competitive speeds—15 ppm and 10 ppm respectively—and includes a 2.7” LCD touchscreen for intuitive control. ',
+      'Users describe it as easy to set up and consistently reliable, with vivid color output and sharp text, especially when presentation matters. ',
+      'While color printing may not be the fastest, the Canon’s hybrid ink and streamlined design offer a smoother, more satisfying user experience.'
     ];
   } else {
     selectedPrinter = 'Canon';
     segments = [
-      `While the Canon PIXMA TR7820 provides a range of all-in-one functions, the HP OfficeJet Pro 8025e may be a more practical and budget-friendly choice.`,
-      `It offers a larger paper tray (225 sheets vs. 100 sheets), faster black-and-white print speeds (20 ppm vs. 15 ppm), and costs nearly half as much ($${printers.value.find(p => p.id === 'hp').price} vs. $${printers.value.find(p => p.id === 'canon').price}).`,
-      `If your team values high-volume printing and smart productivity features like Smart Tasks and self-healing Wi-Fi, the HP could be the smarter pick.`
+      'The HP OfficeJet Pro 8025e may be more cost-effective and feature-integrated. ',
+      'HP OfficeJet Pro 8025e leads in print speed—20 ppm for black-and-white—and supports a larger 225-sheet paper tray and legal-size printing (up to 8.5” x 14”), helping reduce workflow interruptions. ',
+      'Features like Smart Tasks and self-healing Wi-Fi give it a thoughtful edge, making repetitive tasks feel smoother and more automated. ',
+      'Although setup can take a bit longer, users praise its performance and depth of features, making HP a reliable partner.'
     ];
   }
 

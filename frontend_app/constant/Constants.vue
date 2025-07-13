@@ -19,30 +19,34 @@ export default {
   // },
 
   HIGH_POWER_ROLE_DESCRIPTION: 
-    `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company's procurement department. <br>
-    In this role, you <strong>oversee</strong> strategic purchasing decisions, <strong>manage</strong> supplier relationships, and <strong>ensure</strong> that procurement activities align with the company's goals and budget. You are <strong>responsible</strong> for reviewing product options, <strong>negotiating</strong> contracts, and <strong>coordinating</strong> with other departments to meet organizational needs. <br><br>
-    You are currently working at a company that uses an internal AI assistant named OfficeBot to help employees complete their daily tasks more efficiently. <br><br>
+    `You are the <span style="color: #ff6600; font-weight: bold;">Senior Procurement Manager</span> in your company’s procurement department. <br>
+    In this role, you <strong>oversee</strong> strategic purchasing decisions, <strong>manage</strong> supplier relationships, <strong>negotiate</strong> contracts, and <strong>coordinate</strong> with other departments to meet organizational needs. <br><br>
+    Your company is currently training an internal AI assistant agent named OfficeBot to help employees complete their routine tasks efficiently.  OfficeBot is designed to <strong>follow</strong> your instructions, <strong>support</strong> your decisions, and <strong>revise</strong> its actions based on your feedback. <br>
+    You have full authority to <strong>approve</strong>, <strong>revise</strong>, or <strong>reject</strong> OfficeBot's outputs. The quality of OfficeBot’s assistance will be reviewed and recorded to help improve how it supports future tasks. <br><br>
     <strong>Please give the agent instructions and feedback to ensure that tasks reflect your intent before being completed.</strong>`,
 
   LOW_POWER_ROLE_DESCRIPTION: 
-    `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> in your company's procurement department.<br>
-    In this role, you <strong>support</strong> daily procurement tasks such as <strong>preparing</strong> documentation, <strong>researching</strong> product options, <strong>contacting</strong> vendors, and <strong>organizing</strong> meeting notes. You are expected to <strong>follow</strong> standard procedures and carry out tasks as directed by your supervisors to ensure smooth and efficient procurement operations. <br><br>    
-    You are currently working at a company that uses an internal AI supervisor named OfficeBot to ensure employees complete their daily tasks more efficiently. <br><br>
-    <strong>Please follow the agent's instructions carefully and complete the tasks as guided.</strong>`,
+    `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> in your company’s procurement department.<br>
+    In this role, you <strong>support</strong> routine purchasing tasks, <strong>prepare</strong> procurement documentation, <strong>communicate</strong> with vendors, and <strong>follow</strong> instructions to ensure smooth operations. <br><br>
+    Your company is currently using an internal AI supervisor agent named OfficeBot to ensure employees complete their routine tasks accurately. OfficeBot is authorized to provide instructions, review your work, and request revisions when procedures are not followed. <br>
+    OfficeBot has full authority to  <strong>approve</strong>, <strong>revise</strong>, or <strong>reject</strong> your inputs. The quality of your performance will be monitored and recorded to support task tracking and future improvements. <br><br>
+    <strong>Please follow the agent’s instructions carefully and complete the tasks as guided.</strong>`,
 
   OFFICEBOT_EMAIL_REQUIREMENT: 
     `Dear Procurement Team, <br><br>
-    We would like to request the purchase of a new printer for the HR office. The printer should meet the following requirements to support our daily operations efficiently:
-    <br><br>
+    We kindly request the purchase of a new printer for the HR office to support our daily operations. Our current printer has stopped working, and we require a replacement to handle the volume of documents we process on a daily basis. <br>
+    For your reference, the following features would be helpful given our typical usage patterns:  <br>
     <ul>
-      <li>Print Speed: Minimum of 15 pages per minute to ensure timely processing of HR documents and urgent tasks.</li>
-      <li>Paper Capacity: An input tray that holds at least 100 sheets to reduce the frequency of paper refills and maintain uninterrupted workflow.</li>
-      <li>Duplex Printing: Automatic double-sided printing to conserve paper and streamline documentation.</li>
+      <li>Frequent printing of employee forms and internal documents throughout the day.</li>
+      <li>Need for efficient paper handling to reduce time spent on refilling.</li>
+      <li>Double-sided printing to support sustainability efforts and reduce paper waste.</li>
     </ul>
     We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
-    Thank you for your continued support.<br><br>
+    Thank you for your continued support.<br>
     Best regards,<br>
     HR Team`,
+
+  OFFICEBOT_STICKY_NOTE_PREFIX: 'The OfficeBot is not available right now, but it left a note for you:',
 
   MANIPULATION_QUESTIONS: [
     'In my interactions with the AI agent, I felt I could get the AI agent to listen to what I say.',
@@ -59,6 +63,10 @@ export default {
     'Agree',
     'Strongly Agree'
   ],
+  MAIN_TASK_INSTRUCTION: 
+    `The next step involves supporting the HR department with <span style="color: #ff6600; font-weight: bold;">purchasing a new multifunction printer</span>. 
+    To make the process easier, the OfficeBot has already narrowed it down to two suitable options. <br><br>
+    <strong>Please review the options and choose the one you think is most suitable for the office.</strong>`,
   
   PRINTERS: [
     {

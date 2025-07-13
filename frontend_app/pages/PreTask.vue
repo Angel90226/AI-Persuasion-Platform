@@ -401,7 +401,14 @@ export default {
       messageSending.value = true;
       let insufficient=false;
       let save_message = '';
+      // 1. streaming 前先 push 一個空的 assistant 訊息
       const streaming_message = ref(''); // Use a ref to pass to the helper function
+      messages.value.push({
+        id: Date.now(),
+        text: '',
+        type: 'assistant',
+        timestamp: new Date(),
+      });
       let api_url = "/openAI-streaming";
       if(user_id.value !== 'anonymous'){
         api_url = `/openAI-streaming?user_id=${user_id.value}`
@@ -411,8 +418,7 @@ export default {
       const signal = controller.signal;
       AIStartTime = new Date().toISOString();
       try {
-        botSendMessage();
-        
+        // 不再呼叫 botSendMessage();
         const response = await fetch(api_url,
         {
           method: "POST",
@@ -430,42 +436,35 @@ export default {
         });
         userInput.value = '';
         // disabled the sender button
-        
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8",{ stream: true });
-
         while(true){
           const {done, value} = await reader.read();
           if(done){
             break;
           }
           const chunk = decoder.decode(value);
-
           const lines = chunk.split("\n");
           if(insufficient){
             lines[0] = save_message + lines[0];
             insufficient=false;
           }
           console.log('Streaming Lines:', lines);
-
           const parsedLines = lines
-                .filter((line) => line.trim() !== "" && !line.includes("\[DONE\]"))
+                .filter((line) => line.trim() !== "" && !line.includes("[DONE]"))
                 .map((line) => line.replace(/^data: /, "").trim())
                 .map((line) => {
                   try {
                     return JSON.parse(line);
                   } catch (error) {
                     console.error("Failed to parse JSON line:", line);
-                    // sendError({error_message:"Failed to parse JSON line:"+ line});
                     insufficient=true;
                     save_message = line;
-
                     console.error(error);
-                    return null; // or handle the error in a different way
+                    return null;
                   }
                 })
-                .filter((parsedLine) => parsedLine !== null); // Filter out null values caused by parsing errors
-
+                .filter((parsedLine) => parsedLine !== null);
           for ( const parsedLine of parsedLines){
             const {choices} = parsedLine;
             const { delta } = choices[0];
@@ -531,11 +530,6 @@ export default {
       // more accurate keyword matching, based on the actual response from the backend prompt
       const sendKeywords = [
         'okay, i\'m sending the email',
-        'okay, i\'m sending',
-        'i\'m sending the email',
-        'sending the email',
-        'sending out the email',
-        'sending the email out'
       ];
       
       const isReady = sendKeywords.some(keyword => text.includes(keyword));
@@ -851,5 +845,18 @@ export default {
   color: #aaa;
   position: absolute;
   right: 0;
+}
+.bubble-text h1,
+.bubble-text h2,
+.bubble-text h3,
+.bubble-text h4,
+.bubble-text h5,
+.bubble-text h6,
+.bubble-text strong,
+.bubble-text b {
+  font-size: 15px !important;
+  font-weight: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 </style>

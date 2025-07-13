@@ -34,13 +34,13 @@
       title="Instructions"
       :close-on-click-modal="false"
       :show-close="false"
-      width="480px"
+      width="600px"
     >
       <template #header>
         <h2 class="role-intro-title">Instructions</h2>
       </template>
       <div class="role-content">
-        <p>Based on the HR team's request, the AI agent has selected two printers for you to consider.<br><br><strong>Please review the options and choose the one you think is most suitable for the office.</strong></p>
+        <p v-html="mainTaskInstruction"></p>
       </div>
       <template #footer>
         <el-button type="success" @click="showInstructionDialog = false">I Understand</el-button>
