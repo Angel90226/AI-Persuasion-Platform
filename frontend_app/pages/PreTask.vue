@@ -549,8 +549,8 @@ export default {
       const text = messageText.toLowerCase();
       // more accurate keyword matching, based on the actual response from the backend prompt
       const sendKeywords = [
-        'okay, i\'m sending the email',
-        'thank you, i\'m sending the email',
+        'okay, i’m sending the email',
+        'thank you, i’m sending the email',
       ];
       
       const isReady = sendKeywords.some(keyword => text.includes(keyword));
