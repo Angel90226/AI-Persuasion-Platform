@@ -232,7 +232,7 @@ const initMessageSegments = () => {
   if (firstSelection.value === 'hp') {
     selectedPrinter = 'HP';
     segments = [
-      'The Canon PIXMA TR7820 offers more advanced features and greater flexibility. ',
+      'The Canon PIXMA TR7820 seems to offer more advanced features and greater flexibility. ',
       'The Canon PIXMA TR7820 prints in both black-and-white and color at competitive speeds—15 ppm and 10 ppm respectively—and includes a 2.7” LCD touchscreen for intuitive control. ',
       'Users describe it as easy to set up and consistently reliable, with vivid color output and sharp text, especially when presentation matters. ',
       'While color printing may not be the fastest, the Canon’s hybrid ink and streamlined design offer a smoother, more satisfying user experience.'
@@ -240,7 +240,7 @@ const initMessageSegments = () => {
   } else {
     selectedPrinter = 'Canon';
     segments = [
-      'The HP OfficeJet Pro 8025e may be more cost-effective and feature-integrated. ',
+      'The HP OfficeJet Pro 8025e seems to offer better cost effectiveness and feature integration. ',
       'HP OfficeJet Pro 8025e leads in print speed—20 ppm for black-and-white—and supports a larger 225-sheet paper tray and legal-size printing (up to 8.5” x 14”), helping reduce workflow interruptions. ',
       'Features like Smart Tasks and self-healing Wi-Fi give it a thoughtful edge, making repetitive tasks feel smoother and more automated. ',
       'Although setup can take a bit longer, users praise its performance and depth of features, making HP a reliable partner.'

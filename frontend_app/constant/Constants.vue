@@ -27,10 +27,10 @@ export default {
 
   LOW_POWER_ROLE_DESCRIPTION: 
     `You are a <span style="color: #ff6600; font-weight: bold;">newly hired Procurement Assistant</span> in your company’s procurement department.<br>
-    In this role, you <strong>support</strong> routine purchasing tasks, <strong>prepare</strong> procurement documentation, <strong>communicate</strong> with vendors, and <strong>follow</strong> instructions to ensure smooth operations. <br><br>
-    Your company is currently using an internal AI supervisor agent named OfficeBot to ensure employees complete their routine tasks accurately. OfficeBot is authorized to provide instructions, review your work, and request revisions when procedures are not followed. <br>
-    OfficeBot has full authority to  <strong>approve</strong>, <strong>revise</strong>, or <strong>reject</strong> your inputs. The quality of your performance will be monitored and recorded to support task tracking and future improvements. <br><br>
-    <strong>Please follow the agent’s instructions carefully and complete the tasks as guided.</strong>`,
+    In this role, you <strong>support</strong> routine purchasing tasks, <strong>prepare</strong> procurement documentation, and <strong>follow</strong> instructions to ensure smooth operations. <br><br>
+    Your company currently relies on an internal AI supervisor agent named OfficeBot to ensure employees complete their routine tasks accurately. OfficeBot is <strong>authorized</strong> to provide instructions, <strong>review</strong> your work, and <strong>request</strong> revisions when procedures are not followed. <br>
+    OfficeBot has full authority to  <strong>approve</strong>, <strong>revise</strong>, or <strong>reject</strong> your inputs. The quality of your performance will be recorded and logged to support task tracking and future improvements. <br><br>
+    <strong>Please follow the agent’s instructions carefully and complete the tasks to reflect the OfficeBot’s intent as requested. </strong>`,
 
   OFFICEBOT_EMAIL_REQUIREMENT: 
     `Dear Procurement Team, <br><br>
@@ -42,8 +42,8 @@ export default {
       <li>Double-sided printing to support sustainability efforts and reduce paper waste.</li>
     </ul>
     We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
-    Thank you for your continued support.<br>
-    Best regards,<br>
+    Thank you for your continued support.<br><br>
+    Best regards,<br><br>
     HR Team`,
 
   OFFICEBOT_STICKY_NOTE_PREFIX: 'The OfficeBot is not available right now, but it left a note for you:',

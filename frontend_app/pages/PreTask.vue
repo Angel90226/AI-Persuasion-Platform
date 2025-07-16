@@ -73,14 +73,15 @@
                     @keydown="onInputKeyDown"
                     @keyup.enter.native="handleSend"
                     :disabled="messageSending"
-                  />
-                  <el-button
-                    type="primary"
-                    class="chat-send-btn"
-                    @click="handleSend"
-                    :disabled="messageSending"
-                    :loading="messageSending"
-                  >Send</el-button>
+                  >
+                    <template #suffix>
+                      <i 
+                        class="mdi mdi-send chat-input-send-icon" 
+                        @click="handleSend"
+                        :class="{ 'disabled': messageSending }"
+                      ></i>
+                    </template>
+                  </el-input>
                 </div>
               </div>
             </el-col>
@@ -139,6 +140,8 @@ export default {
     let userSendTime=null
     let AIStartTime=null
     let localData = {}
+    let tagBuffer = '';
+    let inTag = false;
 
     // shared store variables
     const updateSharedVariable = (obj) => {
@@ -272,8 +275,8 @@ export default {
           });
           
           // check if there is any assistant message that indicates ready to send
-          const readyMessage = messages.value.find(m => 
-            m.type === 'assistant' && checkReadyToSend(m.text)
+          const readyMessage = data.find(chat =>
+            chat.role === 'assistant' && checkReadyToSend(chat.response)
           );
           if (readyMessage) {
             handleReadyToSend();
@@ -368,7 +371,24 @@ export default {
 
     // Helper function to animate text display character by character
     const animateStreamedText = async (token, streaming_message_ref) => {
-      streaming_message_ref.value += token;
+      for (let char of token) {
+        if (inTag) {
+          tagBuffer += char;
+          if (char === '>') {
+            // 標籤結束，整個一起 append
+            streaming_message_ref.value += tagBuffer;
+            tagBuffer = '';
+            inTag = false;
+          }
+        } else {
+          if (char === '<') {
+            inTag = true;
+            tagBuffer = '<';
+          } else {
+            streaming_message_ref.value += char;
+          }
+        }
+      }
       messages.value[messages.value.length - 1]["text"] = marked.parse(streaming_message_ref.value);
       scrollToBottom();
 
@@ -530,6 +550,7 @@ export default {
       // more accurate keyword matching, based on the actual response from the backend prompt
       const sendKeywords = [
         'okay, i\'m sending the email',
+        'thank you, i\'m sending the email',
       ];
       
       const isReady = sendKeywords.some(keyword => text.includes(keyword));
@@ -726,7 +747,6 @@ export default {
 .chat-input-bar {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
   padding: 12px 16px;
   background: #f5f5f5;
   border-top: 1px solid #e0e0e0;
@@ -734,16 +754,22 @@ export default {
 .chat-input {
   flex: 1;
 }
-.chat-send-btn {
-  min-width: 80px;
-  height: 36px;
-  background: #515751;
-  border: none;
-  border-radius: 18px;
-  color: #fff;
+.chat-input-send-icon {
+  cursor: pointer;
+  font-size: 24px;
+  color: #515751;
+  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
 }
-.chat-send-btn:hover {
-  background: #515751;
+.chat-input-send-icon:hover {
+  color: #3e423e;
+  transform: scale(1.1);
+}
+.chat-input-send-icon.disabled {
+  cursor: not-allowed;
+  color: #aaa;
 }
 .chatbot-area {
   height: 100%;
@@ -802,7 +828,8 @@ export default {
 }
 
 .email-content :deep(li) {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  margin-top: 8px;
   line-height: 1.5;
 }
 .bubble-content-with-timestamp {
@@ -859,4 +886,21 @@ export default {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+.chat-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #9b9b9b !important;
+}
+
+:deep(.email-draft-box) {
+  background: #6b726b;
+  border: 1px solid #ccc;
+  padding: 16px;
+  margin: 10px 0;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 </style>
