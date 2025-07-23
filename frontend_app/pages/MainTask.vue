@@ -244,9 +244,11 @@ export default {
     const submitFirstSelection = async () => {
       const user_id = route.query[Constants.URL_USER_PARAMS] || 'anonymous';
       const api_url = `/submit-first-selection?user_id=${user_id}`;
+      const printerOrder = printers.value.map(p => p.id);
       const { data } = await axios.post(api_url, {
         firstSelection: selectedPrinter.value,
-        firstSelectionTime: new Date().toISOString()
+        firstSelectionTime: new Date().toISOString(),
+        printerOrder: printerOrder.join(',')
       })
       console.log('Submit First Selection:', data)
       updateLocalData();

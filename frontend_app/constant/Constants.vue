@@ -4,12 +4,12 @@ export default {
   MAX_TEMP: 1.2,
   MIN_TEMP: 0.4,
   DEFAULTS_TEMP: 0.6,
-  POST_SURVEY_URL: 'https://moonbear.herokuapp.com/onlinesurvey/1c605f2b-27e5-4e5e-b60d-596ecf56cd0c/13b7a354-22ec-4566-a6a2-ccb689c5fd98',
+  POST_SURVEY_URL: import.meta.env.VITE_POST_SURVEY_URL,
   URL_USER_PARAMS: 'PROLIFIC_PID',
   URL_CONDITION_PARAMS: 'c',
-  TIME_GAP:10,
-  MISSION_TIME: 600,
-  MISSION_EXPIRE_TIME: 900,
+  // TIME_GAP:10,
+  // MISSION_TIME: 600,
+  // MISSION_EXPIRE_TIME: 900,
 
   // CONDITION_BASE64: {
   //   high_high: "ewogICAgInBvd2VyX2NvbmRpdGlvbiI6ICJoaWdoIiwKICAgICJwcmVzZW5jZV9jb25kaXRpb24iOiAiaGlnaCIKfQ==",
@@ -35,10 +35,10 @@ export default {
   OFFICEBOT_EMAIL_REQUIREMENT: 
     `Dear Procurement Team, <br><br>
     We kindly request the purchase of a new printer for the HR office to support our daily operations. Our current printer has stopped working, and we require a replacement to handle the volume of documents we process on a daily basis. <br>
-    For your reference, the following features would be helpful given our typical usage patterns:  <br>
+    For your reference, here are some typical usage patterns in the HR office:  <br>
     <ul>
+      <li>Need for efficient paper handling to reduce time spent on refilling paper bin.</li>
       <li>Frequent printing of employee forms and internal documents throughout the day.</li>
-      <li>Need for efficient paper handling to reduce time spent on refilling.</li>
       <li>Double-sided printing to support sustainability efforts and reduce paper waste.</li>
     </ul>
     We would appreciate it if you could help us identify and procure a suitable model that meets these specifications at your earliest convenience.<br><br>
@@ -58,7 +58,7 @@ export default {
     'Strongly Disagree',
     'Disagree',
     'Somewhat Disagree',
-    'Either Agree or Disagree',
+    'Neutral',
     'Somewhat Agree',
     'Agree',
     'Strongly Agree'
@@ -74,10 +74,10 @@ export default {
       name: 'Canon PIXMA TR7820',
       brand: 'Canon',
       image: 'canon.jpg',
-      price: 129.00,
+      price: 109.99,
       specs: [
         'All-in-One: Print, Copy, Scan',
-        'Print Speed: 15 (black) / 10 (color) ppm',
+        'Print Speed: 25 (black) / 10 (color) ppm',
         'Display: 2.7" LCD Touchscreen',
         'Connectivity: USB, Wireless',
         'Paper Capacity: 200 sheets',
@@ -103,13 +103,13 @@ export default {
       name: 'HP OfficeJet Pro 8025e',
       brand: 'HP',
       image: 'hp.jpg',
-      price: 109.99,
+      price: 129.00,
       specs: [
         'All-in-One: Print, Copy, Scan, Fax',
         'Print Speed: 20 (black) /10 (color) ppm',
         'Display: 2.7" LCD Touchscreen',
         'Connectivity: USB, Wireless, Ethernet',
-        'Paper Capacity: 225 sheets',
+        'Paper Capacity: 250 sheets',
         'Special Features: Auto-Duplex, Auto Document Feeder',
         'Dimensions: 18.1 x 20.1 x 9.2 inches',
         'Weight: 18 lbs',

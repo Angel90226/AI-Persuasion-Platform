@@ -179,7 +179,7 @@ module AIPersuasion
         user_id = r.params['user_id'] || 'anonymous'
         data = JSON.parse(r.body.read)
         user = User.first(user_id: user_id)
-        selection= Selection.create(user_id: user.id, first_selection: data['firstSelection'], first_selection_time: data['firstSelectionTime'])
+        selection= Selection.create(user_id: user.id, first_selection: data['firstSelection'], first_selection_time: data['firstSelectionTime'], printer_order: data['printerOrder'])
         response.status = 201
         selection.attributes.to_json
       end

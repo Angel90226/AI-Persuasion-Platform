@@ -1,8 +1,8 @@
 <template>
   <div class="missing-page">
     <div class="content">
-      <h1>Missing User ID</h1>
-      <p>Sorry, we couldn't find your user ID. Please make sure you accessed this page through the correct link.</p>
+      <h1>URL is not valid</h1>
+      <p>Sorry, this URL is not valid. Please make sure you accessed this page through the correct link.</p>
       <p>If you believe this is an error, please contact the study administrator.</p>
     </div>
   </div>

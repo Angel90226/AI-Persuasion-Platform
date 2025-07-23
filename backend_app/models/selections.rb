@@ -17,7 +17,8 @@ module AIPersuasion
         first_selection:,
         first_selection_time:,
         final_selection:,
-        final_selection_time:
+        final_selection_time:,
+        printer_order:
       }
     end
   end

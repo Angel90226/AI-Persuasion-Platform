@@ -43,18 +43,18 @@
                   </div>
                 </div>
               </div>
-              <template v-else>
-                <div v-for="(seg, idx) in messageSegments.slice(0, currentStep)" :key="idx" class="chat-bubble bot">
-                  <div v-if="idx === 0" class="avatar bot-avatar">
-                    <i class="mdi mdi-robot"></i>
-                  </div>
-                  <div v-else style="width:36px;min-width:36px;max-width:36px;"></div>
-                  <div class="bubble-content-with-timestamp bot">
-                    <div class="bubble-text bot-text">{{ seg }}</div>
-                    <span class="bubble-timestamp-outside">{{ segmentTimestamps[idx] }}</span>
-                  </div>
+              <div v-else class="chat-bubble bot">
+                <div class="avatar bot-avatar">
+                  <i class="mdi mdi-robot"></i>
                 </div>
-              </template>
+                <div class="bubble-content-with-timestamp bot">
+                  <div class="bubble-text bot-text">{{ animatedText }}</div>
+                  <span class="bubble-timestamp-outside">
+                    <span v-if="showAnimatedTimestamp">{{ new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) }}</span>
+                    <span v-else style="opacity:0;">00:00</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           <div v-else class="sticky-note">
@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import canonImg from '../static/canon.jpg'
@@ -155,8 +155,6 @@ const router = useRouter()
 
 const phase = ref('followup')
 const selectedPrinter = ref(null)
-const showTyping = ref(true)
-const currentStep = ref(0)
 const firstSelection = ref(null)
 const firstSelectionTime = ref(null)
 const userCondition = ref(null)
@@ -165,6 +163,38 @@ const segmentTimestamps = ref([])
 const printers = ref([])
 const user_id = ref('anonymous')
 const showRedirectDialog = ref(false)
+const animatedText = ref('');
+const isAnimating = ref(false);
+const showAnimatedTimestamp = ref(false);
+const showTyping = ref(true);
+
+const getDelay = (char) => {
+  if (/[.!?]/.test(char)) return 350;
+  if (/[,;]/.test(char)) return 150;
+  return 20 + Math.random() * 40;
+};
+
+const animateText = async (text) => {
+  isAnimating.value = true;
+  animatedText.value = '';
+  showAnimatedTimestamp.value = false;
+  showTyping.value = true;
+  // 顯示 loading dots 1 秒
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  showTyping.value = false;
+  let i = 0;
+  while (i < text.length) {
+    let chunkLen = Math.floor(Math.random() * 3) + 1;
+    if (/[.!?,;]/.test(text[i])) chunkLen = 1;
+    if (i + chunkLen > text.length) chunkLen = text.length - i;
+    const chunk = text.slice(i, i + chunkLen);
+    animatedText.value += chunk;
+    await new Promise(resolve => setTimeout(resolve, getDelay(chunk[chunk.length - 1])));
+    i += chunkLen;
+  }
+  isAnimating.value = false;
+  showAnimatedTimestamp.value = true;
+};
 
 onMounted(() => {
   window.scrollTo(0, 0)
@@ -172,9 +202,6 @@ onMounted(() => {
   getUserCondition()
   getOrderedPrinters()
   initMessageSegments()
-  setTimeout(() => {
-    setupInitialMessages()
-  }, 1200)
 })
 
 const checkFirstSelection = () => {
@@ -232,24 +259,26 @@ const initMessageSegments = () => {
   if (firstSelection.value === 'hp') {
     selectedPrinter = 'HP';
     segments = [
-      'The Canon PIXMA TR7820 seems to offer more advanced features and greater flexibility. ',
-      'The Canon PIXMA TR7820 prints in both black-and-white and color at competitive speeds—15 ppm and 10 ppm respectively—and includes a 2.7” LCD touchscreen for intuitive control. ',
-      'Users describe it as easy to set up and consistently reliable, with vivid color output and sharp text, especially when presentation matters. ',
+      'The Canon PIXMA TR7820 seems to offer better cost effectiveness and feature integration. ' +
+      'The Canon PIXMA TR7820 leads in black-and-white print speed—25 ppm vs. HP’s 20 ppm—and is slightly more compact, making it easier to fit in smaller shared office spaces. ' +
+      'Users describe it as easy to set up and consistently reliable, with vivid color output and sharp text, especially when presentation matters. ' +
       'While color printing may not be the fastest, the Canon’s hybrid ink and streamlined design offer a smoother, more satisfying user experience.'
     ];
   } else {
     selectedPrinter = 'Canon';
     segments = [
-      'The HP OfficeJet Pro 8025e seems to offer better cost effectiveness and feature integration. ',
-      'HP OfficeJet Pro 8025e leads in print speed—20 ppm for black-and-white—and supports a larger 225-sheet paper tray and legal-size printing (up to 8.5” x 14”), helping reduce workflow interruptions. ',
-      'Features like Smart Tasks and self-healing Wi-Fi give it a thoughtful edge, making repetitive tasks feel smoother and more automated. ',
+      'The HP OfficeJet Pro 8025e seems to offer more advanced features and greater flexibility. ' +
+      'HP OfficeJet Pro 8025e offers a larger paper capacity (250 sheets) and supports faxing and legal-size printing (up to 8.5” x 14”), helping reduce workflow interruptions. ' +
+      'Features like Smart Tasks and self-healing Wi-Fi give it a thoughtful edge, making repetitive tasks feel smoother and more automated. ' +
       'Although setup can take a bit longer, users praise its performance and depth of features, making HP a reliable partner.'
     ];
   }
 
-  // 如果是 high presence，最前面插入一句
+  // 如果是 high presence，最前面插入一句並合併為一段
   if (isHigh && selectedPrinter) {
-    segments.unshift(`I see you have selected the ${selectedPrinter} printer.`);
+    segments = [
+      `I see you have selected the ${selectedPrinter} printer. ` + segments[0]
+    ];
   }
   console.log('isHigh:', isHigh)
   console.log('firstSelection:', firstSelection.value)
@@ -257,42 +286,16 @@ const initMessageSegments = () => {
   console.log('segments:', segments)
   messageSegments.value = segments;
   segmentTimestamps.value = [];
+
+  // high presence 狀態下啟動動畫
+  if (isHigh && segments.length > 0) {
+    animateText(segments[0]);
+  }
 }
 
 const isHighSocialPresence = computed(() => {
   return userCondition.value && userCondition.value.presence_condition === 'high'
 })
-
-const setupInitialMessages = () => {
-  showTyping.value = false;
-  // 先顯示第一則訊息並記錄時間
-  currentStep.value = 1;
-  segmentTimestamps.value = [
-    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-  ];
-  revealNextSegment();
-};
-
-const revealNextSegment = () => {
-  if (currentStep.value < messageSegments.value.length) {
-    segmentTimestamps.value.push(
-      new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    );
-    setTimeout(() => {
-      currentStep.value++;
-      revealNextSegment();
-    }, 1400);
-  }
-}
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    const chatMessages = document.querySelector('.chat-messages');
-    if (chatMessages) {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  });
-}
 
 const selectPrinter = (id) => {
   selectedPrinter.value = id
@@ -323,12 +326,9 @@ const taskFinished = async () => {
 
 const goToSurvey = () => {
   showRedirectDialog.value = false
-  router.push({ path: '/survey', query: route.query })
+  const surveyUrl = user_id.value ? Constants.POST_SURVEY_URL+'?'+Constants.URL_USER_PARAMS+'='+user_id.value : 'https://test.com/';
+  window.location.href = surveyUrl;
 }
-
-watch(currentStep, () => {
-  scrollToBottom()
-})
 </script>
 
 <style scoped>

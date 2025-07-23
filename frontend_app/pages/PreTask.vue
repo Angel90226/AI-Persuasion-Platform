@@ -48,9 +48,11 @@
                         :class="['bubble-text', msg.type === 'assistant' ? 'bot-text' : 'user-text', 'draft-reply']"
                         v-html="msg.text"
                       ></div>
-                      <span class="bubble-timestamp-outside">
-                        {{ formatTimestamp(msg.timestamp) }}
+                      <span class="bubble-timestamp-outside" v-if="msg.type === 'assistant'">
+                        <span v-if="showAssistantTimestamp">{{ formatTimestamp(msg.timestamp) }}</span>
+                        <span v-else style="opacity:0;">00:00</span>
                       </span>
+                      <span v-else class="bubble-timestamp-outside">{{ formatTimestamp(msg.timestamp) }}</span>
                     </div>
                   </div>
                   <!-- Typing animation -->
@@ -142,6 +144,7 @@ export default {
     let localData = {}
     let tagBuffer = '';
     let inTag = false;
+    const showAssistantTimestamp = ref(false);
 
     // shared store variables
     const updateSharedVariable = (obj) => {
@@ -371,6 +374,7 @@ export default {
 
     // Helper function to animate text display character by character
     const animateStreamedText = async (token, streaming_message_ref) => {
+      showAssistantTimestamp.value = false;
       for (let char of token) {
         if (inTag) {
           tagBuffer += char;
@@ -388,18 +392,15 @@ export default {
             streaming_message_ref.value += char;
           }
         }
+        messages.value[messages.value.length - 1]["text"] = marked.parse(streaming_message_ref.value);
+        scrollToBottom();
+        if (checkReadyToSend(streaming_message_ref.value)) {
+          handleReadyToSend();
+        }
+        const delay = getDelay(char);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
-      messages.value[messages.value.length - 1]["text"] = marked.parse(streaming_message_ref.value);
-      scrollToBottom();
-
-      // check if there is any assistant message that indicates ready to send
-      if (checkReadyToSend(streaming_message_ref.value)) {
-        handleReadyToSend();
-      }
-
-      // Determine delay based on token content (punctuation can be slower)
-      const delay = getDelay(token);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      showAssistantTimestamp.value = true;
     };
 
     const getDelay = (token) => {
@@ -595,6 +596,7 @@ export default {
       isReadyToSend,
       onInputKeyDown,
       botSendMessage,
+      showAssistantTimestamp,
     }
   }
 }
