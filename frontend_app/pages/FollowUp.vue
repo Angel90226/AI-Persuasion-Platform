@@ -328,7 +328,7 @@ const goToSurvey = async () => {
   showRedirectDialog.value = false;
   try {
     const { data } = await axios.get('/post-survey-url');
-    const surveyUrl = data.post_survey_url ? data.post_survey_url + '?' + Constants.URL_USER_PARAMS + '=' + user_id.value : 'https://test.com/';
+    const surveyUrl = data.post_survey_url ? data.post_survey_url + '?' + new URLSearchParams(route.query).toString() : 'https://test.com/';
     window.location.href = surveyUrl;
   } catch (e) {
     window.location.href = 'https://test.com/';
