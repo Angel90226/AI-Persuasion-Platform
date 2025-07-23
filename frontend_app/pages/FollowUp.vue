@@ -197,6 +197,7 @@ const animateText = async (text) => {
 };
 
 onMounted(() => {
+  console.log("POST_SURVEY_URL:", process.env.VUE_APP_POST_SURVEY_URL)
   window.scrollTo(0, 0)
   checkFirstSelection()
   getUserCondition()
