@@ -24,7 +24,8 @@ const routes = [
     path: '/missing',
     name: 'Missing',
     component: Missing
-  }
+  },
+  { path: '/:pathMatch(.*)*', component: Missing }
 ];
 
 const router = createRouter({

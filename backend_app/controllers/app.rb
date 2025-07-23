@@ -276,6 +276,11 @@ module AIPersuasion
         { success: true, message: 'Queue cleared' }.to_json
       end
 
+      r.get 'post-survey-url' do
+        response['Content-Type'] = 'application/json'
+        { post_survey_url: ENV['POST_SURVEY_URL'] }.to_json
+      end
+
       # frontend api
       r.public
       r.root do

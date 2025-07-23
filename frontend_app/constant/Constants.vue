@@ -4,7 +4,7 @@ export default {
   MAX_TEMP: 1.2,
   MIN_TEMP: 0.4,
   DEFAULTS_TEMP: 0.6,
-  POST_SURVEY_URL: "https://moonbear.herokuapp.com/onlinesurvey/7d385a11-fb6c-4b20-af4e-dc4434259043/b3093846-6c16-4e35-93b7-ff620e466859",
+  // POST_SURVEY_URL: "https://moonbear.herokuapp.com/onlinesurvey/7d385a11-fb6c-4b20-af4e-dc4434259043/b3093846-6c16-4e35-93b7-ff620e466859",
   URL_USER_PARAMS: 'PROLIFIC_PID',
   URL_CONDITION_PARAMS: 'c',
   // TIME_GAP:10,

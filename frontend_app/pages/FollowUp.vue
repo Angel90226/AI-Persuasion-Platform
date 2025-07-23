@@ -197,8 +197,6 @@ const animateText = async (text) => {
 };
 
 onMounted(() => {
-  console.log("POST_SURVEY_URL_ENV:", process.env.VUE_APP_POST_SURVEY_URL)
-  console.log("POST_SURVEY_URL:", Constants.POST_SURVEY_URL)
   window.scrollTo(0, 0)
   checkFirstSelection()
   getUserCondition()
@@ -326,10 +324,15 @@ const taskFinished = async () => {
   }
 }
 
-const goToSurvey = () => {
-  showRedirectDialog.value = false
-  const surveyUrl = user_id.value ? Constants.POST_SURVEY_URL+'?'+Constants.URL_USER_PARAMS+'='+user_id.value : 'https://test.com/';
-  window.location.href = surveyUrl;
+const goToSurvey = async () => {
+  showRedirectDialog.value = false;
+  try {
+    const { data } = await axios.get('/post-survey-url');
+    const surveyUrl = data.post_survey_url ? data.post_survey_url + '?' + Constants.URL_USER_PARAMS + '=' + user_id.value : 'https://test.com/';
+    window.location.href = surveyUrl;
+  } catch (e) {
+    window.location.href = 'https://test.com/';
+  }
 }
 </script>
 
